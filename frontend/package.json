@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "quasar dev",
-    "build": "quasar build",
+    "build": "npx quasar build",
     "lint": "eslint . --ext .js,.vue"
   },
   "dependencies": {
