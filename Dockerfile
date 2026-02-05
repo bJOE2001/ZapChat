@@ -1,9 +1,9 @@
 FROM php:8.2-apache
 
-# System dependencies
+# System dependencies (including PostgreSQL client libs)
 RUN apt-get update && apt-get install -y \
-    git unzip libpng-dev libonig-dev libxml2-dev zip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    git unzip libpng-dev libonig-dev libxml2-dev zip libpq-dev \
+    && docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd
 
 # Enable Apache rewrite for Laravel
 RUN a2enmod rewrite
