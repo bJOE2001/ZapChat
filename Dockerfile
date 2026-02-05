@@ -31,7 +31,11 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-avail
 # Fix permissions for storage and cache
 RUN chown -R www-data:www-data storage bootstrap/cache
 
+# Entrypoint: run migrations on startup, then start Apache
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+ENTRYPOINT ["docker-entrypoint.sh"]
 
