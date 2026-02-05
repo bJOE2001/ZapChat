@@ -13,12 +13,15 @@ WORKDIR /var/www/html
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy backend composer files and install dependencies
+# Copy backend composer files and install dependencies (skip scripts until artisan exists)
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy the rest of the Laravel backend
 COPY backend ./
+
+# Run Laravel package discovery (requires artisan)
+RUN php artisan package:discover --ansi
 
 # Set Apache document root to public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
