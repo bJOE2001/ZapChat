@@ -22,6 +22,7 @@ return [
         'http://127.0.0.1:9000',
         'http://127.0.0.1:9001',
         'http://127.0.0.1:8080',
+        'https://zapchat-three.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
