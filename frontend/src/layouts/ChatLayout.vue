@@ -1,0 +1,171 @@
+<template>
+  <q-layout view="hHh lpR fFf" class="bg-grey-2">
+    <q-header elevated class="bg-primary text-white">
+      <q-toolbar>
+        <q-toolbar-title class="text-weight-bold">ZapChat</q-toolbar-title>
+        <q-space />
+        <span class="q-mr-md">{{ auth.user?.name }}</span>
+        <q-btn flat round dense icon="logout" @click="handleLogout" />
+      </q-toolbar>
+    </q-header>
+
+    <q-drawer
+      v-model="drawer"
+      show-if-above
+      bordered
+      :width="320"
+      class="bg-white"
+    >
+      <q-toolbar class="bg-primary text-white">
+        <q-btn flat round dense icon="add" @click="chat.showNewChatDialog = true" />
+        <q-space />
+        <q-toolbar-title>Chats</q-toolbar-title>
+      </q-toolbar>
+      <q-scroll-area class="fit">
+        <q-list>
+          <q-item
+            v-for="conv in chat.conversations"
+            :key="conv.id"
+            clickable
+            v-ripple
+            :active="route.params.id === String(conv.id)"
+            active-class="bg-primary-1"
+            :to="`/c/${conv.id}`"
+          >
+            <q-item-section avatar>
+              <q-avatar color="primary" text-color="white" size="42">
+                {{ (conv.name || '?').charAt(0).toUpperCase() }}
+              </q-avatar>
+              <q-badge
+                v-if="conv.unread_count > 0"
+                floating
+                color="red"
+                :label="conv.unread_count > 99 ? '99+' : conv.unread_count"
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-weight-medium">{{ conv.name || 'Chat' }}</q-item-label>
+              <q-item-label caption>
+                {{ conv.last_message ? (conv.last_message.body || '(attachment)').slice(0, 40) : 'No messages' }}
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item v-if="chat.conversations.length === 0 && !chat.loading">
+            <q-item-section class="text-center text-grey">No chats yet. Start one!</q-item-section>
+          </q-item>
+        </q-list>
+      </q-scroll-area>
+    </q-drawer>
+
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+
+    <q-dialog v-model="chat.showNewChatDialog" persistent>
+      <q-card style="min-width: 360px">
+        <q-card-section class="row items-center q-pb-none">
+          <h6 class="q-ma-none">New conversation</h6>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <q-option-group
+            v-model="newChatType"
+            :options="[
+              { label: '1-on-1', value: 'direct' },
+              { label: 'Group', value: 'group' }
+            ]"
+            color="primary"
+            inline
+          />
+          <q-select
+            v-model="selectedUserIds"
+            :options="userOptions"
+            option-value="id"
+            option-label="name"
+            label="Select user(s)"
+            multiple
+            use-chips
+            use-input
+            emit-value
+            map-options
+            input-debounce="300"
+            @filter="searchUsers"
+            class="q-mt-sm"
+          />
+          <q-input
+            v-if="newChatType === 'group'"
+            v-model="newGroupName"
+            label="Group name"
+            class="q-mt-sm"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn unelevated color="primary" label="Start chat" :disable="!canStartChat" @click="startChat" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </q-layout>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from 'src/stores/auth'
+import { useChatStore } from 'src/stores/chat'
+import { api } from 'src/boot/axios'
+import { useQuasar } from 'quasar'
+
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+const chat = useChatStore()
+const $q = useQuasar()
+
+const drawer = ref(true)
+const newChatType = ref('direct')
+const newGroupName = ref('')
+const selectedUserIds = ref([])
+const userOptions = ref([])
+const userSearchCache = ref({})
+
+const canStartChat = computed(() => {
+  if (newChatType.value === 'direct') return selectedUserIds.value.length === 1
+  return selectedUserIds.value.length >= 1 && !!newGroupName.value?.trim()
+})
+
+async function searchUsers (val, update) {
+  if (!val) {
+    update(() => { userOptions.value = [] })
+    return
+  }
+  const { data } = await api.get('/users', { params: { q: val } })
+  update(() => { userOptions.value = data.users })
+}
+
+async function startChat () {
+  try {
+    const conv = await chat.createConversation(
+      newChatType.value,
+      selectedUserIds.value,
+      newChatType.value === 'group' ? newGroupName.value : null
+    )
+    selectedUserIds.value = []
+    newGroupName.value = ''
+    chat.showNewChatDialog = false
+    router.push(`/c/${conv.id}`)
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to start chat' })
+  }
+}
+
+function handleLogout () {
+  auth.logout()
+  router.replace('/login')
+}
+
+onMounted(() => {
+  chat.fetchConversations()
+})
+</script>
