@@ -1,30 +1,39 @@
 <template>
   <q-page class="bg-grey-2">
     <div class="q-pa-lg column items-center">
-      <!-- Circular profile picture with fallback avatar -->
-      <div class="q-mb-lg">
+      <!-- Circular profile picture with edit text at bottom -->
+      <div class="profile-avatar-wrap q-mb-lg">
         <q-avatar
-          size="120"
+          size="220"
           color="primary"
           text-color="white"
-          font-size="48px"
+          font-size="88px"
           class="profile-avatar"
         >
           <q-img
-            v-if="auth.user?.avatar_url"
-            :src="auth.user.avatar_url"
+            v-if="profileImageUrl"
+            :src="profileImageUrl"
             fit="cover"
             class="full-height full-width"
           />
           <span v-else>{{ (auth.user?.name || '?').charAt(0).toUpperCase() }}</span>
         </q-avatar>
+        <label class="profile-edit-avatar">
+          <input
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="onProfileImageChange"
+          />
+          <span class="edit-avatar-label">Edit avatar</span>
+        </label>
       </div>
 
       <!-- Full name -->
-      <div class="text-h5 text-weight-bold text-grey-9 q-mb-md">
+      <div class="text-h5 text-weight-bold text-grey-9 q-mb-md text-center">
         {{ auth.user?.name || 'User' }}
       </div>
-      <div class="text-body2 text-grey-7 q-mb-lg">{{ auth.user?.email }}</div>
+      <div class="text-body2 text-grey-7 q-mb-lg text-center">{{ auth.user?.email }}</div>
 
       <!-- Bio section -->
       <q-card flat bordered class="bio-card q-mb-lg" style="min-width: 100%; max-width: 480px;">
@@ -134,15 +143,28 @@
                 <q-icon name="chevron_right" color="grey" />
               </q-item-section>
             </q-item>
-            <q-item clickable v-ripple>
-              <q-item-section avatar>
-                <q-icon name="palette" color="primary" />
-              </q-item-section>
-              <q-item-section>Appearance</q-item-section>
-              <q-item-section side>
-                <q-icon name="chevron_right" color="grey" />
-              </q-item-section>
-            </q-item>
+            <q-expansion-item
+              icon="palette"
+              label="Appearance"
+              header-class="text-primary"
+              expand-icon-class="text-grey"
+            >
+              <q-card flat bordered class="q-mx-sm q-mb-sm">
+                <q-card-section class="q-pt-none">
+                  <div class="text-caption text-grey-7 q-mb-sm">Theme</div>
+                  <q-item class="q-px-none">
+                    <q-item-section>Dark mode</q-item-section>
+                    <q-item-section side>
+                      <q-toggle
+                        v-model="darkMode"
+                        color="primary"
+                        @update:model-value="onDarkModeChange"
+                      />
+                    </q-item-section>
+                  </q-item>
+                </q-card-section>
+              </q-card>
+            </q-expansion-item>
           </q-list>
         </q-card-section>
       </q-card>
@@ -153,16 +175,66 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/auth'
 import { useChatStore } from 'src/stores/chat'
 
 const auth = useAuthStore()
 const chat = useChatStore()
 const router = useRouter()
+const $q = useQuasar()
 const messageRequestsLoading = ref(false)
 const acceptingId = ref(null)
 
+const DARK_MODE_KEY = 'zapchat_dark_mode'
+const darkMode = ref($q.dark?.isActive ?? false)
+
+function onDarkModeChange (value) {
+  $q.dark?.set(value)
+  try {
+    localStorage.setItem(DARK_MODE_KEY, value ? '1' : '0')
+  } catch (e) {}
+}
+
 const BIO_KEY = 'zapchat_profile_bio'
+const AVATAR_KEY = 'zapchat_profile_avatar'
+
+const profileImageUrl = ref(null)
+
+function getAvatarStorageKey () {
+  return auth.user?.id ? `${AVATAR_KEY}_${auth.user.id}` : null
+}
+
+function loadProfileImage () {
+  const key = getAvatarStorageKey()
+  if (key) {
+    const data = localStorage.getItem(key)
+    profileImageUrl.value = data || auth.user?.avatar_url || null
+  } else {
+    profileImageUrl.value = auth.user?.avatar_url || null
+  }
+}
+
+function onProfileImageChange (e) {
+  const file = e.target.files?.[0]
+  if (!file || !file.type.startsWith('image/')) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    const dataUrl = reader.result
+    const key = getAvatarStorageKey()
+    if (key) {
+      try {
+        localStorage.setItem(key, dataUrl)
+        profileImageUrl.value = dataUrl
+        $q.notify({ type: 'positive', message: 'Profile photo updated' })
+      } catch (err) {
+        $q.notify({ type: 'negative', message: 'Image too large to save' })
+      }
+    }
+  }
+  reader.readAsDataURL(file)
+  e.target.value = ''
+}
 
 const bio = ref('')
 const bioDraft = ref('')
@@ -221,14 +293,64 @@ watch(editingBio, (isEditing) => {
 onMounted(() => {
   loadBio()
   bioDraft.value = bio.value
+  loadProfileImage()
   loadMessageRequests()
+  try {
+    const saved = localStorage.getItem(DARK_MODE_KEY)
+    if (saved !== null) {
+      const isDark = saved === '1'
+      darkMode.value = isDark
+      $q.dark?.set(isDark)
+    }
+  } catch (e) {}
 })
 </script>
 
 <style scoped>
+.profile-avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
 .profile-avatar {
   border: 4px solid white;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  border-radius: 50%;
+}
+/* Fit image inside circle: scale to cover, centered, no overflow */
+.profile-avatar :deep(.q-img__content),
+.profile-avatar :deep(.q-img__image) {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+}
+.profile-avatar :deep(img) {
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+}
+.profile-edit-avatar {
+  cursor: pointer;
+  display: block;
+}
+.profile-edit-avatar .edit-avatar-label {
+  font-size: 0.875rem;
+  color: var(--q-primary);
+  text-decoration: underline;
+}
+.profile-edit-avatar:hover .edit-avatar-label {
+  opacity: 0.85;
+}
+.profile-edit-avatar .hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 .bio-card .bio-input :deep(.q-field__control) {
   min-height: 80px;

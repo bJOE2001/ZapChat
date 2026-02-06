@@ -35,9 +35,9 @@
       show-if-above
       bordered
       :width="320"
-      class="bg-white"
+      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white'"
     >
-      <q-toolbar class="bg-primary text-white">
+      <q-toolbar :class="$q.dark?.isActive ? 'drawer-toolbar-dark' : 'bg-primary text-white'">
         <q-btn flat round dense icon="add" @click="chat.showNewChatDialog = true" />
         <q-space />
         <q-toolbar-title>Chats</q-toolbar-title>
@@ -111,47 +111,44 @@
       bordered
       side="right"
       :width="320"
-      class="bg-white"
+      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white'"
     >
-      <q-toolbar class="bg-primary text-white">
-        <q-toolbar-title>People</q-toolbar-title>
+      <q-toolbar :class="$q.dark?.isActive ? 'drawer-toolbar-dark' : 'bg-primary text-white'">
+        <q-toolbar-title>Friends</q-toolbar-title>
+        <q-btn flat round dense icon="add" @click="openAddFriend" />
       </q-toolbar>
       <q-scroll-area class="fit">
-        <q-list v-if="usersList.length > 0">
-          <q-item v-for="user in usersList" :key="user.id" class="q-py-sm">
+        <q-list v-if="friendsList.length > 0">
+          <q-item
+            v-for="friend in friendsList"
+            :key="friend.id"
+            clickable
+            v-ripple
+            :active="route.params.id === String(friend.conversationId)"
+            active-class="bg-primary-1"
+            :to="`/c/${friend.conversationId}`"
+            class="q-py-sm"
+          >
             <q-item-section avatar>
               <q-avatar color="primary" text-color="white" size="40">
-                {{ (user.name || '?').charAt(0).toUpperCase() }}
+                {{ (friend.name || '?').charAt(0).toUpperCase() }}
               </q-avatar>
             </q-item-section>
             <q-item-section>
-              <q-item-label class="text-weight-medium">{{ user.name }}</q-item-label>
-              <q-item-label caption>{{ user.email }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-btn
-                flat
-                round
-                dense
-                icon="add"
-                size="sm"
-                color="primary"
-                :loading="addingUserId === user.id"
-                @click="startConversationWithUser(user)"
-              />
+              <q-item-label class="text-weight-medium">{{ friend.name }}</q-item-label>
             </q-item-section>
           </q-item>
         </q-list>
-        <q-item v-else-if="usersLoading" class="flex flex-center">
-          <q-spinner color="primary" size="2em" />
-        </q-item>
         <q-item v-else class="text-center text-grey">
-          <q-item-section>No other users yet.</q-item-section>
+          <q-item-section>
+            <div class="text-body2">No friends yet.</div>
+            <div class="text-caption q-mt-xs">Tap + to search by name and start a conversation.</div>
+          </q-item-section>
         </q-item>
       </q-scroll-area>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container class="chat-page-container">
       <router-view />
     </q-page-container>
 
@@ -172,15 +169,16 @@
       </q-tabs>
     </q-footer>
 
-    <q-dialog v-model="chat.showNewChatDialog" persistent>
+    <q-dialog v-model="chat.showNewChatDialog" persistent @hide="addFriendDialogMode = false">
       <q-card style="min-width: 360px">
         <q-card-section class="row items-center q-pb-none">
-          <h6 class="q-ma-none">New conversation</h6>
+          <h6 class="q-ma-none">{{ addFriendDialogMode ? 'Add friend' : 'New conversation' }}</h6>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
           <q-option-group
+            v-if="!addFriendDialogMode"
             v-model="newChatType"
             :options="[
               { label: '1-on-1', value: 'direct' },
@@ -194,8 +192,8 @@
             :options="userOptions"
             option-value="id"
             option-label="name"
-            label="Select user(s)"
-            multiple
+            :label="addFriendDialogMode ? 'Search by name' : 'Select user(s)'"
+            :multiple="!addFriendDialogMode"
             use-chips
             use-input
             emit-value
@@ -205,7 +203,7 @@
             class="q-mt-sm"
           />
           <q-input
-            v-if="newChatType === 'group'"
+            v-if="newChatType === 'group' && !addFriendDialogMode"
             v-model="newGroupName"
             label="Group name"
             class="q-mt-sm"
@@ -213,7 +211,13 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn unelevated color="primary" label="Start chat" :disable="!canStartChat" @click="startChat" />
+          <q-btn
+            unelevated
+            color="primary"
+            :label="addFriendDialogMode ? 'Start conversation' : 'Start chat'"
+            :disable="!canStartChat"
+            @click="startChat"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -255,9 +259,7 @@ const rightDrawer = ref(false)
 const showDeleteConvDialog = ref(false)
 const convToDelete = ref(null)
 const navTab = ref('chat')
-const usersList = ref([])
-const usersLoading = ref(false)
-const addingUserId = ref(null)
+const addFriendDialogMode = ref(false)
 
 function getNavTabFromRoute () {
   const name = route.name
@@ -269,35 +271,12 @@ function getNavTabFromRoute () {
 }
 watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
 
-watch(rightDrawer, (open) => {
-  if (open && usersList.value.length === 0) fetchUsers()
-})
-
-async function fetchUsers () {
-  usersLoading.value = true
-  try {
-    const { data } = await api.get('/users')
-    usersList.value = data.users || []
-  } catch (e) {
-    usersList.value = []
-    $q.notify({ type: 'negative', message: 'Failed to load users' })
-  } finally {
-    usersLoading.value = false
-  }
-}
-
-async function startConversationWithUser (user) {
-  addingUserId.value = user.id
-  try {
-    const conv = await chat.createConversation('direct', [user.id], null)
-    rightDrawer.value = false
-    router.push(`/c/${conv.id}`)
-    $q.notify({ type: 'positive', message: `Started chat with ${user.name}` })
-  } catch (e) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to start conversation' })
-  } finally {
-    addingUserId.value = null
-  }
+function openAddFriend () {
+  addFriendDialogMode.value = true
+  newChatType.value = 'direct'
+  selectedUserIds.value = []
+  newGroupName.value = ''
+  chat.showNewChatDialog = true
 }
 const newChatType = ref('direct')
 const newGroupName = ref('')
@@ -306,8 +285,27 @@ const userOptions = ref([])
 const userSearchCache = ref({})
 
 const canStartChat = computed(() => {
-  if (newChatType.value === 'direct') return selectedUserIds.value.length === 1
-  return selectedUserIds.value.length >= 1 && !!newGroupName.value?.trim()
+  const ids = selectedUserIds.value
+  const hasOne = Array.isArray(ids) ? ids.length === 1 : ids != null && ids !== ''
+  const hasAny = Array.isArray(ids) ? ids.length >= 1 : ids != null && ids !== ''
+  if (newChatType.value === 'direct' || addFriendDialogMode.value) return hasOne
+  return hasAny && !!newGroupName.value?.trim()
+})
+
+const friendsList = computed(() => {
+  const list = []
+  const seen = new Set()
+  const myId = auth.user?.id
+  if (!myId) return list
+  for (const conv of chat.conversations) {
+    for (const p of conv.participants || []) {
+      if (p.id !== myId && !seen.has(p.id)) {
+        seen.add(p.id)
+        list.push({ id: p.id, name: p.name, conversationId: conv.id })
+      }
+    }
+  }
+  return list
 })
 
 async function searchUsers (val, update) {
@@ -321,14 +319,18 @@ async function searchUsers (val, update) {
 
 async function startChat () {
   try {
+    const participantIds = Array.isArray(selectedUserIds.value)
+      ? selectedUserIds.value
+      : (selectedUserIds.value != null ? [selectedUserIds.value] : [])
     const conv = await chat.createConversation(
       newChatType.value,
-      selectedUserIds.value,
+      participantIds,
       newChatType.value === 'group' ? newGroupName.value : null
     )
     selectedUserIds.value = []
     newGroupName.value = ''
     chat.showNewChatDialog = false
+    if (addFriendDialogMode.value) rightDrawer.value = false
     router.push(`/c/${conv.id}`)
   } catch (e) {
     $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to start chat' })
@@ -385,5 +387,25 @@ onMounted(() => {
   bottom: 0;
   right: 0;
   border: 2px solid white;
+}
+</style>
+
+<style>
+/* Only chats panel, message conversation, and friends panel scroll — not the whole page */
+.chat-page-container {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+}
+.chat-page-container .q-page {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100%;
 }
 </style>
