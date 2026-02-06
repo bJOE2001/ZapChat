@@ -75,6 +75,42 @@
         </q-card-section>
       </q-card>
 
+      <!-- Message requests section -->
+      <q-card flat bordered class="message-requests-card q-mb-lg" style="min-width: 100%; max-width: 480px;">
+        <q-card-section>
+          <div class="text-subtitle1 text-weight-medium q-mb-md">Message requests</div>
+          <q-list v-if="chat.messageRequests.length > 0" bordered class="rounded-borders">
+            <q-item v-for="req in chat.messageRequests" :key="req.id" class="q-py-sm">
+              <q-item-section avatar>
+                <q-avatar color="primary" text-color="white" size="44">
+                  {{ (req.name || '?').charAt(0).toUpperCase() }}
+                </q-avatar>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-weight-medium">{{ req.name || 'Chat' }}</q-item-label>
+                <q-item-label caption>
+                  {{ req.last_message ? (req.last_message.body || '(attachment)').slice(0, 50) : 'No messages yet' }}
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-btn
+                  unelevated
+                  dense
+                  color="primary"
+                  label="Accept"
+                  :loading="acceptingId === req.id"
+                  @click="acceptRequest(req)"
+                />
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <p v-else-if="messageRequestsLoading" class="text-body2 text-grey-6 q-ma-none text-center q-py-md">
+            Loading...
+          </p>
+          <p v-else class="text-body2 text-grey-5 q-ma-none italic">No message requests.</p>
+        </q-card-section>
+      </q-card>
+
       <!-- Settings section -->
       <q-card flat bordered class="settings-card" style="min-width: 100%; max-width: 480px;">
         <q-card-section>
@@ -116,9 +152,15 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
+import { useChatStore } from 'src/stores/chat'
 
 const auth = useAuthStore()
+const chat = useChatStore()
+const router = useRouter()
+const messageRequestsLoading = ref(false)
+const acceptingId = ref(null)
 
 const BIO_KEY = 'zapchat_profile_bio'
 
@@ -151,6 +193,27 @@ function cancelEditBio () {
   editingBio.value = false
 }
 
+async function loadMessageRequests () {
+  messageRequestsLoading.value = true
+  try {
+    await chat.fetchMessageRequests()
+  } finally {
+    messageRequestsLoading.value = false
+  }
+}
+
+async function acceptRequest (req) {
+  acceptingId.value = req.id
+  try {
+    await chat.acceptMessageRequest(req.id)
+    router.push(`/c/${req.id}`)
+  } catch (e) {
+    await loadMessageRequests()
+  } finally {
+    acceptingId.value = null
+  }
+}
+
 watch(editingBio, (isEditing) => {
   if (isEditing) bioDraft.value = bio.value
 })
@@ -158,6 +221,7 @@ watch(editingBio, (isEditing) => {
 onMounted(() => {
   loadBio()
   bioDraft.value = bio.value
+  loadMessageRequests()
 })
 </script>
 

@@ -16,15 +16,20 @@ class ConversationController extends Controller
         $user = $request->user();
         $conversations = $user->conversations()
             ->with(['participants'])
+            ->wherePivotNotNull('accepted_at')
             ->get()
             ->map(function (Conversation $c) use ($user) {
                 $lastMessage = $c->messages()->with('user')->latest()->first();
                 $otherParticipants = $c->participants->where('id', '!=', $user->id);
+                $other = $otherParticipants->first();
+                $online = $otherParticipants->contains(fn ($p) => $p->last_activity_at
+                    && $p->last_activity_at->gt(now()->subMinutes(5)));
                 return [
                     'id' => $c->id,
                     'type' => $c->type,
-                    'name' => $c->type === 'group' ? $c->name : $otherParticipants->first()?->name,
+                    'name' => $c->type === 'group' ? $c->name : $other?->name,
                     'participants' => $c->participants->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+                    'online' => $online,
                     'last_message' => $lastMessage ? [
                         'body' => $lastMessage->body,
                         'user_name' => $lastMessage->user->name,
@@ -80,6 +85,7 @@ class ConversationController extends Controller
                 'conversation_id' => $conversation->id,
                 'user_id' => $id,
                 'role' => $id === $user->id ? 'admin' : 'member',
+                'accepted_at' => $id === $user->id ? now() : null,
             ]);
         }
 
@@ -92,6 +98,10 @@ class ConversationController extends Controller
         $conversation = Conversation::with('participants')->findOrFail($id);
         if (! $conversation->participants->contains('id', $request->user()->id)) {
             abort(403);
+        }
+        $pivot = ConversationParticipant::where('conversation_id', $id)->where('user_id', $request->user()->id)->first();
+        if (! $pivot || ! $pivot->accepted_at) {
+            abort(403, 'Accept the message request first.');
         }
         ConversationParticipant::where('conversation_id', $id)
             ->where('user_id', $request->user()->id)
@@ -113,6 +123,60 @@ class ConversationController extends Controller
             $conversation->delete();
         }
         return response()->json(['message' => 'Conversation removed']);
+    }
+
+    public function messageRequests(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $conversations = $user->conversations()
+            ->with(['participants'])
+            ->wherePivotNull('accepted_at')
+            ->get()
+            ->map(function (Conversation $c) use ($user) {
+                $lastMessage = $c->messages()->with('user')->latest()->first();
+                $otherParticipants = $c->participants->where('id', '!=', $user->id);
+                $other = $otherParticipants->first();
+                return [
+                    'id' => $c->id,
+                    'type' => $c->type,
+                    'name' => $c->type === 'group' ? $c->name : $other?->name,
+                    'participants' => $c->participants->map(fn ($p) => ['id' => $p->id, 'name' => $p->name]),
+                    'last_message' => $lastMessage ? [
+                        'body' => $lastMessage->body,
+                        'user_name' => $lastMessage->user->name,
+                        'created_at' => $lastMessage->created_at->toIso8601String(),
+                    ] : null,
+                    'unread_count' => $this->getUnreadCount($c->id, $user->id),
+                    'updated_at' => $c->updated_at->toIso8601String(),
+                ];
+            });
+
+        $conversations = $conversations->sortByDesc(function ($c) {
+            return $c['last_message']['created_at'] ?? $c['updated_at'] ?? '';
+        })->values();
+
+        return response()->json(['conversations' => $conversations]);
+    }
+
+    public function accept(Request $request, int $id): JsonResponse
+    {
+        $updated = ConversationParticipant::where('conversation_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->whereNull('accepted_at')
+            ->update(['accepted_at' => now()]);
+
+        if ($updated === 0) {
+            $pivot = ConversationParticipant::where('conversation_id', $id)
+                ->where('user_id', $request->user()->id)
+                ->first();
+            if (! $pivot) {
+                abort(404);
+            }
+            return response()->json(['message' => 'Already accepted', 'conversation_id' => $id]);
+        }
+
+        $conversation = Conversation::with('participants')->findOrFail($id);
+        return response()->json(['message' => 'Accepted', 'conversation' => $conversation]);
     }
 
     private function getUnreadCount(int $conversationId, int $userId): int

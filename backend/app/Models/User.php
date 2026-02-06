@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'last_activity_at',
     ];
 
     /**
@@ -43,6 +44,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -50,7 +52,7 @@ class User extends Authenticatable
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
         return $this->belongsToMany(Conversation::class, 'conversation_participants')
-            ->withPivot(['role', 'last_read_at'])
+            ->withPivot(['role', 'last_read_at', 'accepted_at'])
             ->withTimestamps();
     }
 }

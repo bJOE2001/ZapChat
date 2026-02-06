@@ -30,6 +30,16 @@ const routes = [
         path: 'profile',
         name: 'profile',
         component: () => import('pages/ProfilePage.vue')
+      },
+      {
+        path: 'stories',
+        name: 'stories',
+        component: () => import('pages/StoriesPage.vue')
+      },
+      {
+        path: 'notifications',
+        name: 'notifications',
+        component: () => import('pages/NotificationsPage.vue')
       }
     ]
   },

@@ -2,14 +2,30 @@
   <q-layout view="hHh lpR fFf" class="bg-grey-2">
     <q-header elevated class="bg-primary text-white">
       <q-toolbar>
+        <q-btn
+          v-if="route.name === 'conversation'"
+          flat
+          round
+          dense
+          icon="arrow_back"
+          @click="router.push('/')"
+        />
         <q-toolbar-title class="text-weight-bold">ZapChat</q-toolbar-title>
         <q-space />
-        <q-btn flat round dense :to="{ name: 'profile' }" class="q-mr-sm">
+        <q-btn flat round dense icon="people" class="q-mr-sm" @click="rightDrawer = !rightDrawer" />
+        <q-btn flat round dense class="q-mr-sm" @click="goToProfileOrClose">
           <q-avatar size="36" color="white" text-color="primary">
             {{ (auth.user?.name || '?').charAt(0).toUpperCase() }}
           </q-avatar>
         </q-btn>
-        <span class="q-mr-md text-body2">{{ auth.user?.name }}</span>
+        <q-btn
+          flat
+          dense
+          no-caps
+          class="q-mr-md text-body2 text-white"
+          :label="auth.user?.name"
+          @click="goToProfileOrClose"
+        />
         <q-btn flat round dense icon="logout" @click="handleLogout" />
       </q-toolbar>
     </q-header>
@@ -38,15 +54,21 @@
             :to="`/c/${conv.id}`"
           >
             <q-item-section avatar>
-              <q-avatar color="primary" text-color="white" size="42">
-                {{ (conv.name || '?').charAt(0).toUpperCase() }}
-              </q-avatar>
-              <q-badge
-                v-if="conv.unread_count > 0"
-                floating
-                color="red"
-                :label="conv.unread_count > 99 ? '99+' : conv.unread_count"
-              />
+              <div class="avatar-with-status relative-position">
+                <q-avatar color="primary" text-color="white" size="42">
+                  {{ (conv.name || '?').charAt(0).toUpperCase() }}
+                </q-avatar>
+                <span
+                  class="status-dot absolute"
+                  :class="conv.online ? 'bg-green' : 'bg-grey-5'"
+                />
+                <q-badge
+                  v-if="conv.unread_count > 0"
+                  floating
+                  color="red"
+                  :label="conv.unread_count > 99 ? '99+' : conv.unread_count"
+                />
+              </div>
             </q-item-section>
             <q-item-section>
               <q-item-label class="text-weight-medium">{{ conv.name || 'Chat' }}</q-item-label>
@@ -83,9 +105,72 @@
       </q-scroll-area>
     </q-drawer>
 
+    <q-drawer
+      v-model="rightDrawer"
+      show-if-above
+      bordered
+      side="right"
+      :width="320"
+      class="bg-white"
+    >
+      <q-toolbar class="bg-primary text-white">
+        <q-toolbar-title>People</q-toolbar-title>
+      </q-toolbar>
+      <q-scroll-area class="fit">
+        <q-list v-if="usersList.length > 0">
+          <q-item v-for="user in usersList" :key="user.id" class="q-py-sm">
+            <q-item-section avatar>
+              <q-avatar color="primary" text-color="white" size="40">
+                {{ (user.name || '?').charAt(0).toUpperCase() }}
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-weight-medium">{{ user.name }}</q-item-label>
+              <q-item-label caption>{{ user.email }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                round
+                dense
+                icon="add"
+                size="sm"
+                color="primary"
+                :loading="addingUserId === user.id"
+                @click="startConversationWithUser(user)"
+              />
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <q-item v-else-if="usersLoading" class="flex flex-center">
+          <q-spinner color="primary" size="2em" />
+        </q-item>
+        <q-item v-else class="text-center text-grey">
+          <q-item-section>No other users yet.</q-item-section>
+        </q-item>
+      </q-scroll-area>
+    </q-drawer>
+
     <q-page-container>
       <router-view />
     </q-page-container>
+
+    <q-footer elevated class="bg-white text-grey-8">
+      <q-tabs
+        v-model="navTab"
+        no-pane-border
+        dense
+        align="justify"
+        active-color="primary"
+        indicator-color="primary"
+        class="nav-tabs"
+      >
+        <q-tab name="chat" icon="chat" label="Chat" @click="router.push('/')" />
+        <q-tab name="stories" icon="auto_stories" label="Stories" @click="router.push('/stories')" />
+        <q-tab name="notifications" icon="notifications" label="Notifications" @click="router.push('/notifications')" />
+        <q-tab name="profile" icon="person" label="Profile" @click="router.push('/profile')" />
+      </q-tabs>
+    </q-footer>
 
     <q-dialog v-model="chat.showNewChatDialog" persistent>
       <q-card style="min-width: 360px">
@@ -152,7 +237,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useChatStore } from 'src/stores/chat'
@@ -166,8 +251,54 @@ const chat = useChatStore()
 const $q = useQuasar()
 
 const drawer = ref(true)
+const rightDrawer = ref(false)
 const showDeleteConvDialog = ref(false)
 const convToDelete = ref(null)
+const navTab = ref('chat')
+const usersList = ref([])
+const usersLoading = ref(false)
+const addingUserId = ref(null)
+
+function getNavTabFromRoute () {
+  const name = route.name
+  if (name === 'inbox' || name === 'conversation') return 'chat'
+  if (name === 'stories') return 'stories'
+  if (name === 'notifications') return 'notifications'
+  if (name === 'profile') return 'profile'
+  return 'chat'
+}
+watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
+
+watch(rightDrawer, (open) => {
+  if (open && usersList.value.length === 0) fetchUsers()
+})
+
+async function fetchUsers () {
+  usersLoading.value = true
+  try {
+    const { data } = await api.get('/users')
+    usersList.value = data.users || []
+  } catch (e) {
+    usersList.value = []
+    $q.notify({ type: 'negative', message: 'Failed to load users' })
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+async function startConversationWithUser (user) {
+  addingUserId.value = user.id
+  try {
+    const conv = await chat.createConversation('direct', [user.id], null)
+    rightDrawer.value = false
+    router.push(`/c/${conv.id}`)
+    $q.notify({ type: 'positive', message: `Started chat with ${user.name}` })
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to start conversation' })
+  } finally {
+    addingUserId.value = null
+  }
+}
 const newChatType = ref('direct')
 const newGroupName = ref('')
 const selectedUserIds = ref([])
@@ -204,6 +335,14 @@ async function startChat () {
   }
 }
 
+function goToProfileOrClose () {
+  if (route.name === 'profile') {
+    router.back()
+  } else {
+    router.push({ name: 'profile' })
+  }
+}
+
 function handleLogout () {
   auth.logout()
   router.replace('/login')
@@ -234,3 +373,17 @@ onMounted(() => {
   chat.fetchConversations()
 })
 </script>
+
+<style scoped>
+.avatar-with-status {
+  display: inline-block;
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  bottom: 0;
+  right: 0;
+  border: 2px solid white;
+}
+</style>
