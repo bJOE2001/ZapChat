@@ -99,6 +99,22 @@ class ConversationController extends Controller
         return response()->json(['conversation' => $conversation]);
     }
 
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $conversation = Conversation::with('participants')->findOrFail($id);
+        if (! $conversation->participants->contains('id', $request->user()->id)) {
+            abort(403);
+        }
+        ConversationParticipant::where('conversation_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->delete();
+        $remaining = $conversation->participants()->count();
+        if ($remaining === 0) {
+            $conversation->delete();
+        }
+        return response()->json(['message' => 'Conversation removed']);
+    }
+
     private function getUnreadCount(int $conversationId, int $userId): int
     {
         $p = ConversationParticipant::where('conversation_id', $conversationId)->where('user_id', $userId)->first();

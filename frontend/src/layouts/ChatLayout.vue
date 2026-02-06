@@ -54,6 +54,27 @@
                 {{ conv.last_message ? (conv.last_message.body || '(attachment)').slice(0, 40) : 'No messages' }}
               </q-item-label>
             </q-item-section>
+            <q-item-section side>
+              <q-btn
+                flat
+                round
+                dense
+                icon="more_vert"
+                size="sm"
+                @click.stop
+              >
+                <q-menu auto-close>
+                  <q-list style="min-width: 180px">
+                    <q-item clickable v-close-popup @click="confirmDeleteConv(conv)">
+                      <q-item-section avatar>
+                        <q-icon name="delete_outline" color="negative" />
+                      </q-item-section>
+                      <q-item-section>Delete conversation</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+            </q-item-section>
           </q-item>
           <q-item v-if="chat.conversations.length === 0 && !chat.loading">
             <q-item-section class="text-center text-grey">No chats yet. Start one!</q-item-section>
@@ -111,6 +132,22 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Delete conversation confirmation -->
+    <q-dialog v-model="showDeleteConvDialog" persistent>
+      <q-card style="min-width: 320px">
+        <q-card-section>
+          <div class="text-h6">Delete conversation</div>
+          <div class="text-body2 q-mt-sm text-grey-8">
+            Remove "{{ convToDelete?.name || 'Chat' }}" from your conversations?
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat color="primary" label="Delete" @click="doDeleteConv" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 
@@ -129,6 +166,8 @@ const chat = useChatStore()
 const $q = useQuasar()
 
 const drawer = ref(true)
+const showDeleteConvDialog = ref(false)
+const convToDelete = ref(null)
 const newChatType = ref('direct')
 const newGroupName = ref('')
 const selectedUserIds = ref([])
@@ -168,6 +207,27 @@ async function startChat () {
 function handleLogout () {
   auth.logout()
   router.replace('/login')
+}
+
+function confirmDeleteConv (conv) {
+  convToDelete.value = conv
+  showDeleteConvDialog.value = true
+}
+
+async function doDeleteConv () {
+  const conv = convToDelete.value
+  if (!conv) return
+  try {
+    const wasActive = route.params.id === String(conv.id)
+    await chat.deleteConversation(conv.id)
+    if (wasActive) router.push('/')
+    $q.notify({ type: 'positive', message: 'Conversation removed' })
+  } catch (e) {
+    $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to delete conversation' })
+  } finally {
+    convToDelete.value = null
+    showDeleteConvDialog.value = false
+  }
 }
 
 onMounted(() => {

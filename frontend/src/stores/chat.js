@@ -85,6 +85,15 @@ export const useChatStore = defineStore('chat', {
       return data.conversation
     },
 
+    async deleteConversation (conversationId) {
+      await api.delete(`/conversations/${conversationId}`)
+      this.conversations = this.conversations.filter(c => c.id !== conversationId)
+      if (this.currentConversation?.id === conversationId) {
+        this.currentConversation = null
+        this.messages = []
+      }
+    },
+
     async pollNewMessages (conversationId) {
       if (this.messages.length === 0) return
       const lastId = Math.max(...this.messages.map(m => m.id))
