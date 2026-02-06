@@ -118,7 +118,8 @@ const displayName = computed(() => {
 })
 
 function attachmentUrl (att) {
-  const base = process.env.API_URL ? process.env.API_URL.replace(/\/api\/?$/, '') : 'http://localhost:8000'
+  const apiUrl = import.meta.env.VITE_API_URL || process.env.API_URL || 'http://localhost:8000/api'
+  const base = apiUrl.replace(/\/api\/?$/, '')
   return `${base}/storage/${att.path}`
 }
 
