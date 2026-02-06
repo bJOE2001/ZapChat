@@ -164,6 +164,7 @@
       >
         <q-tab name="chat" icon="chat" label="Chat" @click="router.push('/')" />
         <q-tab name="stories" icon="auto_stories" label="Stories" @click="router.push('/stories')" />
+        <q-tab name="games" icon="games" label="Games" @click="router.push('/games')" />
         <q-tab name="notifications" icon="notifications" label="Notifications" @click="router.push('/notifications')" />
         <q-tab name="profile" icon="person" label="Profile" @click="router.push('/profile')" />
       </q-tabs>
@@ -265,6 +266,7 @@ function getNavTabFromRoute () {
   const name = route.name
   if (name === 'inbox' || name === 'conversation') return 'chat'
   if (name === 'stories') return 'stories'
+  if (name === 'games' || name?.startsWith('game-')) return 'games'
   if (name === 'notifications') return 'notifications'
   if (name === 'profile') return 'profile'
   return 'chat'
@@ -278,11 +280,21 @@ function openAddFriend () {
   newGroupName.value = ''
   chat.showNewChatDialog = true
 }
+
 const newChatType = ref('direct')
 const newGroupName = ref('')
 const selectedUserIds = ref([])
 const userOptions = ref([])
 const userSearchCache = ref({})
+
+function getNavTabFromRoute () {
+  const name = route.name
+  if (name === 'inbox' || name === 'conversation') return 'chat'
+  if (name === 'games' || name?.startsWith('game-')) return 'games'
+  if (name === 'profile') return 'profile'
+  return 'chat'
+}
+watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
 
 const canStartChat = computed(() => {
   const ids = selectedUserIds.value
