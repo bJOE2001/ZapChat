@@ -23,34 +23,40 @@
           class="q-mb-md"
           :class="msg.user_id === auth.user?.id ? 'row justify-end' : 'row justify-start'"
         >
-          <q-card
-            :class="msg.user_id === auth.user?.id ? 'bg-primary text-white' : 'bg-white'"
-            flat
-            bordered
-            class="q-pa-sm rounded-borders"
-            style="max-width: 75%;"
-          >
-            <div v-if="chat.currentConversation?.type === 'group' && msg.user_id !== auth.user?.id" class="text-caption q-mb-xs">
-              {{ msg.user?.name }}
+          <div class="column" style="max-width: 75%;">
+            <!-- Sender name above the box (group chat only) -->
+            <div
+              v-if="chat.currentConversation?.type === 'group'"
+              class="text-caption q-mb-xs"
+              :class="msg.user_id === auth.user?.id ? 'text-right' : 'text-left'"
+            >
+              {{ msg.user_id === auth.user?.id ? 'You' : (msg.user?.name || 'Unknown') }}
             </div>
-            <div v-if="msg.body" class="message-body">{{ msg.body }}</div>
-            <div v-for="att in msg.attachments" :key="att.id" class="q-mt-xs">
-              <a
-                v-if="att.mime_type?.startsWith('image/')"
-                :href="attachmentUrl(att)"
-                target="_blank"
-                rel="noopener"
-              >
-                <img :src="attachmentUrl(att)" style="max-width: 200px; max-height: 200px; border-radius: 4px;" />
-              </a>
-              <a v-else :href="attachmentUrl(att)" target="_blank" rel="noopener" class="text-bold">
-                {{ att.filename }}
-              </a>
-            </div>
-            <div class="text-caption q-mt-xs" :class="msg.user_id === auth.user?.id ? 'text-white' : 'text-grey'">
-              {{ formatTime(msg.created_at) }}
-            </div>
-          </q-card>
+            <q-card
+              :class="msg.user_id === auth.user?.id ? 'bg-primary text-white' : 'bg-white'"
+              flat
+              bordered
+              class="q-pa-sm rounded-borders"
+            >
+              <div v-if="msg.body" class="message-body">{{ msg.body }}</div>
+              <div v-for="att in msg.attachments" :key="att.id" class="q-mt-xs">
+                <a
+                  v-if="att.mime_type?.startsWith('image/')"
+                  :href="attachmentUrl(att)"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <img :src="attachmentUrl(att)" style="max-width: 200px; max-height: 200px; border-radius: 4px;" />
+                </a>
+                <a v-else :href="attachmentUrl(att)" target="_blank" rel="noopener" class="text-bold">
+                  {{ att.filename }}
+                </a>
+              </div>
+              <div class="text-caption q-mt-xs" :class="msg.user_id === auth.user?.id ? 'text-white' : 'text-grey'">
+                {{ formatTime(msg.created_at) }}
+              </div>
+            </q-card>
+          </div>
         </div>
       </div>
     </q-scroll-area>
