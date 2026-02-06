@@ -10,6 +10,8 @@ class MessageAttachment extends Model
 {
     protected $fillable = ['message_id', 'filename', 'path', 'mime_type', 'size'];
 
+    protected $appends = ['url'];
+
     public function message(): BelongsTo
     {
         return $this->belongsTo(Message::class);

@@ -9,10 +9,11 @@ class ConversationParticipant extends Model
 {
     protected $table = 'conversation_participants';
 
-    protected $fillable = ['conversation_id', 'user_id', 'role', 'last_read_at'];
+    protected $fillable = ['conversation_id', 'user_id', 'role', 'last_read_at', 'accepted_at'];
 
     protected $casts = [
         'last_read_at' => 'datetime',
+        'accepted_at' => 'datetime',
     ];
 
     public function conversation(): BelongsTo

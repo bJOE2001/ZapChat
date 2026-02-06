@@ -15,7 +15,7 @@ export default defineConfig(function (ctx) {
     },
     framework: {
       config: {},
-      plugins: ['Notify']
+      plugins: ['Notify', 'Dark']
     },
     build: {
       env: {

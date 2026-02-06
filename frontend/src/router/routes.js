@@ -32,6 +32,11 @@ const routes = [
         component: () => import('pages/ProfilePage.vue')
       },
       {
+        path: 'stories',
+        name: 'stories',
+        component: () => import('pages/StoriesPage.vue')
+      },
+      {
         path: 'games',
         name: 'games',
         component: () => import('pages/GamesListPage.vue')
@@ -150,6 +155,11 @@ const routes = [
         path: 'games/colormatch',
         name: 'game-colormatch',
         component: () => import('../games/ColorMatchGame.vue')
+      },
+      {
+        path: 'notifications',
+        name: 'notifications',
+        component: () => import('pages/NotificationsPage.vue')
       }
     ]
   },

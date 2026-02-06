@@ -28,14 +28,17 @@ Route::get('/health', function () {
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\UpdateUserLastActivity::class])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/ai-user', [AiChatController::class, 'aiUser']);
+    Route::get('/message-requests', [ConversationController::class, 'messageRequests']);
+    Route::post('/conversations/{id}/accept', [ConversationController::class, 'accept'])->name('conversations.accept');
     Route::apiResource('conversations', ConversationController::class)->only(['index', 'store', 'show', 'destroy']);
     Route::get('/conversations/{conversation}/messages', [MessageController::class, 'index']);
     Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store']);

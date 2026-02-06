@@ -4,6 +4,7 @@ import { api } from 'src/boot/axios'
 export const useChatStore = defineStore('chat', {
   state: () => ({
     conversations: [],
+    messageRequests: [],
     currentConversation: null,
     messages: [],
     messagesPage: 1,
@@ -92,6 +93,19 @@ export const useChatStore = defineStore('chat', {
         this.currentConversation = null
         this.messages = []
       }
+    },
+
+    async fetchMessageRequests () {
+      const { data } = await api.get('/message-requests')
+      this.messageRequests = data.conversations || []
+      return this.messageRequests
+    },
+
+    async acceptMessageRequest (conversationId) {
+      const { data } = await api.post(`/conversations/${conversationId}/accept`)
+      this.messageRequests = this.messageRequests.filter(c => c.id !== conversationId)
+      await this.fetchConversations()
+      return data.conversation
     },
 
     async pollNewMessages (conversationId) {

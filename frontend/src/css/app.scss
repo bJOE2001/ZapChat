@@ -1,1 +1,85 @@
 // ZapChat global styles
+
+// Ensure full-height layout so conversation message area can scroll (flex chain needs height)
+html, body, #q-app {
+  height: 100%;
+}
+.q-layout {
+  min-height: 100%;
+}
+
+// Side panel dark background (used when dark mode is on, applied in template)
+.drawer-dark {
+  background: #1d1d1d !important;
+}
+.drawer-dark .q-scroll-area {
+  background: #1d1d1d !important;
+}
+.drawer-toolbar-dark {
+  background: #252525 !important;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+// When dark mode is on, apply dark backgrounds to layout, drawers, footer, and pages
+// so the whole app (not just Quasar components) follows the theme.
+body.body--dark {
+  .q-layout {
+    background: #1d1d1d !important;
+  }
+  // Top bar (header)
+  .q-header {
+    background: #252525 !important;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  .q-header .q-toolbar,
+  .q-header .q-btn {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  // Side panels (drawers) – override bg-white and style toolbar + content
+  .q-drawer,
+  .q-drawer.bg-white {
+    background: #1d1d1d !important;
+  }
+  .q-drawer .q-scroll-area {
+    background: #1d1d1d !important;
+  }
+  .q-drawer .q-toolbar {
+    background: #252525 !important;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  .q-drawer .q-list {
+    background: transparent;
+  }
+  .q-footer {
+    background: #1d1d1d !important;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  .q-page {
+    background: #1d1d1d !important;
+  }
+  // Conversation page specific
+  .q-page .border-bottom,
+  .q-page .border-top {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+  .q-page .bg-white {
+    background: #2d2d2d !important;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  // Ensure list items and captions in drawers/pages are readable
+  .q-drawer .q-item,
+  .q-footer .q-tab {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  .q-drawer .q-item .q-item__label--caption,
+  .q-footer .q-tab .q-tab__label {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .q-drawer .text-grey {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+  // Login/Register fullscreen
+  .fullscreen.bg-grey-2 {
+    background: #1d1d1d !important;
+  }
+}

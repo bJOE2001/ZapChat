@@ -6,6 +6,7 @@ use App\Chatbot\AiChat;
 use App\Chatbot\AiChatService;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
+use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
@@ -29,6 +30,10 @@ class MessageController extends Controller
         if (! $conversation->participants->contains('id', $request->user()->id)) {
             abort(403);
         }
+        $pivot = ConversationParticipant::where('conversation_id', $conversationId)->where('user_id', $request->user()->id)->first();
+        if (! $pivot || ! $pivot->accepted_at) {
+            abort(403, 'Accept the message request first.');
+        }
 
         $afterId = $request->integer('after_id', 0);
         $query = $conversation->messages()
@@ -49,6 +54,10 @@ class MessageController extends Controller
         $conversation = Conversation::findOrFail($conversationId);
         if (! $conversation->participants->contains('id', $request->user()->id)) {
             abort(403);
+        }
+        $pivot = ConversationParticipant::where('conversation_id', $conversationId)->where('user_id', $request->user()->id)->first();
+        if (! $pivot || ! $pivot->accepted_at) {
+            abort(403, 'Accept the message request first.');
         }
 
         $validated = $request->validate([

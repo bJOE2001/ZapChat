@@ -2,14 +2,30 @@
   <q-layout view="hHh lpR fFf" class="bg-grey-2">
     <q-header elevated class="bg-primary text-white">
       <q-toolbar>
+        <q-btn
+          v-if="route.name === 'conversation'"
+          flat
+          round
+          dense
+          icon="arrow_back"
+          @click="router.push('/')"
+        />
         <q-toolbar-title class="text-weight-bold">ZapChat</q-toolbar-title>
         <q-space />
-        <q-btn flat round dense :to="{ name: 'profile' }" class="q-mr-sm">
+        <q-btn flat round dense icon="people" class="q-mr-sm" @click="rightDrawer = !rightDrawer" />
+        <q-btn flat round dense class="q-mr-sm" @click="goToProfileOrClose">
           <q-avatar size="36" color="white" text-color="primary">
             {{ (auth.user?.name || '?').charAt(0).toUpperCase() }}
           </q-avatar>
         </q-btn>
-        <span class="q-mr-md text-body2">{{ auth.user?.name }}</span>
+        <q-btn
+          flat
+          dense
+          no-caps
+          class="q-mr-md text-body2 text-white"
+          :label="auth.user?.name"
+          @click="goToProfileOrClose"
+        />
         <q-btn flat round dense icon="logout" @click="handleLogout" />
       </q-toolbar>
     </q-header>
@@ -19,9 +35,9 @@
       show-if-above
       bordered
       :width="320"
-      class="bg-white column"
+      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white column'"
     >
-      <q-toolbar class="bg-primary text-white">
+      <q-toolbar :class="$q.dark?.isActive ? 'drawer-toolbar-dark' : 'bg-primary text-white'">
         <q-btn flat round dense icon="add" @click="chat.showNewChatDialog = true" />
         <q-space />
         <q-toolbar-title>Chats</q-toolbar-title>
@@ -38,15 +54,21 @@
             :to="`/c/${conv.id}`"
           >
             <q-item-section avatar>
-              <q-avatar color="primary" text-color="white" size="42">
-                {{ (conv.name || '?').charAt(0).toUpperCase() }}
-              </q-avatar>
-              <q-badge
-                v-if="conv.unread_count > 0"
-                floating
-                color="red"
-                :label="conv.unread_count > 99 ? '99+' : conv.unread_count"
-              />
+              <div class="avatar-with-status relative-position">
+                <q-avatar color="primary" text-color="white" size="42">
+                  {{ (conv.name || '?').charAt(0).toUpperCase() }}
+                </q-avatar>
+                <span
+                  class="status-dot absolute"
+                  :class="conv.online ? 'bg-green' : 'bg-grey-5'"
+                />
+                <q-badge
+                  v-if="conv.unread_count > 0"
+                  floating
+                  color="red"
+                  :label="conv.unread_count > 99 ? '99+' : conv.unread_count"
+                />
+              </div>
             </q-item-section>
             <q-item-section>
               <q-item-label class="text-weight-medium">{{ conv.name || 'Chat' }}</q-item-label>
@@ -95,7 +117,50 @@
       </div>
     </q-drawer>
 
-    <q-page-container>
+    <q-drawer
+      v-model="rightDrawer"
+      show-if-above
+      bordered
+      side="right"
+      :width="320"
+      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white'"
+    >
+      <q-toolbar :class="$q.dark?.isActive ? 'drawer-toolbar-dark' : 'bg-primary text-white'">
+        <q-toolbar-title>Friends</q-toolbar-title>
+        <q-btn flat round dense icon="add" @click="openAddFriend" />
+      </q-toolbar>
+      <q-scroll-area class="fit">
+        <q-list v-if="friendsList.length > 0">
+          <q-item
+            v-for="friend in friendsList"
+            :key="friend.id"
+            clickable
+            v-ripple
+            :active="route.params.id === String(friend.conversationId)"
+            active-class="bg-primary-1"
+            :to="`/c/${friend.conversationId}`"
+            class="q-py-sm"
+          >
+            <q-item-section avatar>
+              <q-avatar color="primary" text-color="white" size="40">
+                {{ (friend.name || '?').charAt(0).toUpperCase() }}
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label class="text-weight-medium">{{ friend.name }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <q-item v-else class="text-center text-grey">
+          <q-item-section>
+            <div class="text-body2">No friends yet.</div>
+            <div class="text-caption q-mt-xs">Tap + to search by name and start a conversation.</div>
+          </q-item-section>
+        </q-item>
+      </q-scroll-area>
+    </q-drawer>
+
+    <q-page-container class="chat-page-container">
       <router-view />
     </q-page-container>
 
@@ -110,15 +175,17 @@
         class="nav-tabs"
       >
         <q-tab name="chat" icon="chat" label="Chat" @click="router.push('/')" />
+        <q-tab name="stories" icon="auto_stories" label="Stories" @click="router.push('/stories')" />
         <q-tab name="games" icon="games" label="Games" @click="router.push('/games')" />
+        <q-tab name="notifications" icon="notifications" label="Notifications" @click="router.push('/notifications')" />
         <q-tab name="profile" icon="person" label="Profile" @click="router.push('/profile')" />
       </q-tabs>
     </q-footer>
 
-    <q-dialog v-model="chat.showNewChatDialog" persistent>
+    <q-dialog v-model="chat.showNewChatDialog" persistent @hide="addFriendDialogMode = false">
       <q-card style="min-width: 360px">
         <q-card-section class="row items-center q-pb-none">
-          <h6 class="q-ma-none">New conversation</h6>
+          <h6 class="q-ma-none">{{ addFriendDialogMode ? 'Add friend' : 'New conversation' }}</h6>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
@@ -132,6 +199,7 @@
             @click="startAiChat"
           />
           <q-option-group
+            v-if="!addFriendDialogMode"
             v-model="newChatType"
             :options="[
               { label: '1-on-1', value: 'direct' },
@@ -145,8 +213,8 @@
             :options="userOptions"
             option-value="id"
             option-label="name"
-            label="Select user(s)"
-            multiple
+            :label="addFriendDialogMode ? 'Search by name' : 'Select user(s)'"
+            :multiple="!addFriendDialogMode"
             use-chips
             use-input
             emit-value
@@ -156,7 +224,7 @@
             class="q-mt-sm"
           />
           <q-input
-            v-if="newChatType === 'group'"
+            v-if="newChatType === 'group' && !addFriendDialogMode"
             v-model="newGroupName"
             label="Group name"
             class="q-mt-sm"
@@ -164,7 +232,13 @@
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn unelevated color="primary" label="Start chat" :disable="!canStartChat" @click="startChat" />
+          <q-btn
+            unelevated
+            color="primary"
+            :label="addFriendDialogMode ? 'Start conversation' : 'Start chat'"
+            :disable="!canStartChat"
+            @click="startChat"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -202,9 +276,11 @@ const chat = useChatStore()
 const $q = useQuasar()
 
 const drawer = ref(true)
+const rightDrawer = ref(false)
 const showDeleteConvDialog = ref(false)
 const convToDelete = ref(null)
 const navTab = ref('chat')
+const addFriendDialogMode = ref(false)
 const newChatType = ref('direct')
 const newGroupName = ref('')
 const selectedUserIds = ref([])
@@ -214,15 +290,44 @@ const userSearchCache = ref({})
 function getNavTabFromRoute () {
   const name = route.name
   if (name === 'inbox' || name === 'conversation') return 'chat'
+  if (name === 'stories') return 'stories'
   if (name === 'games' || name?.startsWith('game-')) return 'games'
+  if (name === 'notifications') return 'notifications'
   if (name === 'profile') return 'profile'
   return 'chat'
 }
 watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
 
+function openAddFriend () {
+  addFriendDialogMode.value = true
+  newChatType.value = 'direct'
+  selectedUserIds.value = []
+  newGroupName.value = ''
+  chat.showNewChatDialog = true
+}
+
 const canStartChat = computed(() => {
-  if (newChatType.value === 'direct') return selectedUserIds.value.length === 1
-  return selectedUserIds.value.length >= 1 && !!newGroupName.value?.trim()
+  const ids = selectedUserIds.value
+  const hasOne = Array.isArray(ids) ? ids.length === 1 : ids != null && ids !== ''
+  const hasAny = Array.isArray(ids) ? ids.length >= 1 : ids != null && ids !== ''
+  if (newChatType.value === 'direct' || addFriendDialogMode.value) return hasOne
+  return hasAny && !!newGroupName.value?.trim()
+})
+
+const friendsList = computed(() => {
+  const list = []
+  const seen = new Set()
+  const myId = auth.user?.id
+  if (!myId) return list
+  for (const conv of chat.conversations) {
+    for (const p of conv.participants || []) {
+      if (p.id !== myId && !seen.has(p.id)) {
+        seen.add(p.id)
+        list.push({ id: p.id, name: p.name, conversationId: conv.id })
+      }
+    }
+  }
+  return list
 })
 
 async function searchUsers (val, update) {
@@ -247,17 +352,29 @@ async function startAiChat () {
 
 async function startChat () {
   try {
+    const participantIds = Array.isArray(selectedUserIds.value)
+      ? selectedUserIds.value
+      : (selectedUserIds.value != null ? [selectedUserIds.value] : [])
     const conv = await chat.createConversation(
       newChatType.value,
-      selectedUserIds.value,
+      participantIds,
       newChatType.value === 'group' ? newGroupName.value : null
     )
     selectedUserIds.value = []
     newGroupName.value = ''
     chat.showNewChatDialog = false
+    if (addFriendDialogMode.value) rightDrawer.value = false
     router.push(`/c/${conv.id}`)
   } catch (e) {
     $q.notify({ type: 'negative', message: e.response?.data?.message || 'Failed to start chat' })
+  }
+}
+
+function goToProfileOrClose () {
+  if (route.name === 'profile') {
+    router.back()
+  } else {
+    router.push({ name: 'profile' })
   }
 }
 
@@ -295,5 +412,36 @@ onMounted(() => {
 <style scoped>
 .bototoy-float {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.avatar-with-status {
+  display: inline-block;
+}
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  bottom: 0;
+  right: 0;
+  border: 2px solid white;
+}
+</style>
+
+<style>
+/* Only chats panel, message conversation, and friends panel scroll — not the whole page */
+.chat-page-container {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 100%;
+}
+.chat-page-container .q-page {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100%;
 }
 </style>
