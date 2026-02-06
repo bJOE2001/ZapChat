@@ -157,6 +157,181 @@ const routes = [
         component: () => import('../games/ColorMatchGame.vue')
       },
       {
+        path: 'games/chess',
+        name: 'game-chess',
+        component: () => import('../games/ChessGame.vue')
+      },
+      {
+        path: 'games/checkers',
+        name: 'game-checkers',
+        component: () => import('../games/CheckersGame.vue')
+      },
+      {
+        path: 'games/flappy',
+        name: 'game-flappy',
+        component: () => import('../games/FlappyBirdGame.vue')
+      },
+      {
+        path: 'games/dots',
+        name: 'game-dots',
+        component: () => import('../games/DotsGame.vue')
+      },
+      {
+        path: 'games/brickbreaker',
+        name: 'game-brickbreaker',
+        component: () => import('../games/BrickBreakerGame.vue')
+      },
+      {
+        path: 'games/asteroids',
+        name: 'game-asteroids',
+        component: () => import('../games/AsteroidsGame.vue')
+      },
+      {
+        path: 'games/battleship',
+        name: 'game-battleship',
+        component: () => import('../games/BattleshipGame.vue')
+      },
+      {
+        path: 'games/blackjack',
+        name: 'game-blackjack',
+        component: () => import('../games/BlackjackGame.vue')
+      },
+      {
+        path: 'games/bowling',
+        name: 'game-bowling',
+        component: () => import('../games/BowlingGame.vue')
+      },
+      {
+        path: 'games/bubbleshooter',
+        name: 'game-bubbleshooter',
+        component: () => import('../games/BubbleShooterGame.vue')
+      },
+      {
+        path: 'games/candycrush',
+        name: 'game-candycrush',
+        component: () => import('../games/CandyCrushGame.vue')
+      },
+      {
+        path: 'games/crossword',
+        name: 'game-crossword',
+        component: () => import('../games/CrosswordGame.vue')
+      },
+      {
+        path: 'games/dice',
+        name: 'game-dice',
+        component: () => import('../games/DiceGame.vue')
+      },
+      {
+        path: 'games/frogger',
+        name: 'game-frogger',
+        component: () => import('../games/FroggerGame.vue')
+      },
+      {
+        path: 'games/galaga',
+        name: 'game-galaga',
+        component: () => import('../games/GalagaGame.vue')
+      },
+      {
+        path: 'games/go',
+        name: 'game-go',
+        component: () => import('../games/GoGame.vue')
+      },
+      {
+        path: 'games/jigsaw',
+        name: 'game-jigsaw',
+        component: () => import('../games/JigsawGame.vue')
+      },
+      {
+        path: 'games/keno',
+        name: 'game-keno',
+        component: () => import('../games/KenoGame.vue')
+      },
+      {
+        path: 'games/ludo',
+        name: 'game-ludo',
+        component: () => import('../games/LudoGame.vue')
+      },
+      {
+        path: 'games/mahjong',
+        name: 'game-mahjong',
+        component: () => import('../games/MahjongGame.vue')
+      },
+      {
+        path: 'games/monopoly',
+        name: 'game-monopoly',
+        component: () => import('../games/MonopolyGame.vue')
+      },
+      {
+        path: 'games/pacman',
+        name: 'game-pacman',
+        component: () => import('../games/PacmanGame.vue')
+      },
+      {
+        path: 'games/poker',
+        name: 'game-poker',
+        component: () => import('../games/PokerGame.vue')
+      },
+      {
+        path: 'games/roulette',
+        name: 'game-roulette',
+        component: () => import('../games/RouletteGame.vue')
+      },
+      {
+        path: 'games/scrabble',
+        name: 'game-scrabble',
+        component: () => import('../games/ScrabbleGame.vue')
+      },
+      {
+        path: 'games/solitaire',
+        name: 'game-solitaire',
+        component: () => import('../games/SolitaireGame.vue')
+      },
+      {
+        path: 'games/spaceinvaders',
+        name: 'game-spaceinvaders',
+        component: () => import('../games/SpaceInvadersGame.vue')
+      },
+      {
+        path: 'games/towerdefense',
+        name: 'game-towerdefense',
+        component: () => import('../games/TowerDefenseGame.vue')
+      },
+      {
+        path: 'games/yahtzee',
+        name: 'game-yahtzee',
+        component: () => import('../games/YahtzeeGame.vue')
+      },
+      {
+        path: 'games/zombie',
+        name: 'game-zombie',
+        component: () => import('../games/ZombieGame.vue')
+      },
+      {
+        path: 'games/angrybirds',
+        name: 'game-angrybirds',
+        component: () => import('../games/AngryBirdsGame.vue')
+      },
+      {
+        path: 'games/bejeweled',
+        name: 'game-bejeweled',
+        component: () => import('../games/BejeweledGame.vue')
+      },
+      {
+        path: 'games/bingo',
+        name: 'game-bingo',
+        component: () => import('../games/BingoGame.vue')
+      },
+      {
+        path: 'games/blockpuzzle',
+        name: 'game-blockpuzzle',
+        component: () => import('../games/BlockPuzzleGame.vue')
+      },
+      {
+        path: 'games/bubblepop',
+        name: 'game-bubblepop',
+        component: () => import('../games/BubblePopGame.vue')
+      },
+      {
         path: 'notifications',
         name: 'notifications',
         component: () => import('pages/NotificationsPage.vue')

@@ -24,28 +24,73 @@
           </q-card-section>
 
           <q-card-section>
-            <q-input
-              v-model.number="guess"
-              type="number"
-              label="Your Guess"
-              outlined
-              :min="1"
-              :max="100"
-              :disable="gameWon || gameOver"
-              class="q-mb-md"
-              @keyup.enter="checkGuess"
-            >
-              <template v-slot:append>
+            <div class="text-h5 text-center q-mb-md" style="min-height: 40px;">
+              {{ guessDisplay || 'Enter your guess' }}
+            </div>
+            <div class="number-pad-guess">
+              <div class="number-row">
                 <q-btn
-                  round
-                  dense
-                  flat
-                  icon="send"
+                  v-for="num in [1, 2, 3]"
+                  :key="num"
+                  unelevated
+                  color="primary"
+                  :label="num"
+                  class="number-btn"
+                  :disable="gameWon || gameOver"
+                  @click="addDigit(num)"
+                />
+              </div>
+              <div class="number-row">
+                <q-btn
+                  v-for="num in [4, 5, 6]"
+                  :key="num"
+                  unelevated
+                  color="primary"
+                  :label="num"
+                  class="number-btn"
+                  :disable="gameWon || gameOver"
+                  @click="addDigit(num)"
+                />
+              </div>
+              <div class="number-row">
+                <q-btn
+                  v-for="num in [7, 8, 9]"
+                  :key="num"
+                  unelevated
+                  color="primary"
+                  :label="num"
+                  class="number-btn"
+                  :disable="gameWon || gameOver"
+                  @click="addDigit(num)"
+                />
+              </div>
+              <div class="number-row">
+                <q-btn
+                  unelevated
+                  color="grey"
+                  label="Clear"
+                  class="number-btn"
+                  :disable="gameWon || gameOver"
+                  @click="clearGuess"
+                />
+                <q-btn
+                  unelevated
+                  color="primary"
+                  label="0"
+                  class="number-btn"
+                  :disable="gameWon || gameOver"
+                  @click="addDigit(0)"
+                />
+                <q-btn
+                  unelevated
+                  color="secondary"
+                  label="Guess"
+                  class="number-btn"
                   :disable="!guess || gameWon || gameOver"
                   @click="checkGuess"
                 />
-              </template>
-            </q-input>
+              </div>
+            </div>
 
             <div v-if="previousGuesses.length > 0" class="q-mt-md">
               <div class="text-subtitle2 q-mb-sm">Previous Guesses:</div>
@@ -88,6 +133,7 @@ import { ref } from 'vue'
 
 const targetNumber = ref(null)
 const guess = ref(null)
+const guessDisplay = ref('')
 const attempts = ref(0)
 const previousGuesses = ref([])
 const hint = ref('')
@@ -95,6 +141,18 @@ const hintClass = ref('')
 const hintIcon = ref('')
 const gameWon = ref(false)
 const gameOver = ref(false)
+
+function addDigit (digit) {
+  if (guessDisplay.value.length < 3) {
+    guessDisplay.value += digit.toString()
+    guess.value = parseInt(guessDisplay.value)
+  }
+}
+
+function clearGuess () {
+  guessDisplay.value = ''
+  guess.value = null
+}
 
 function generateNumber () {
   return Math.floor(Math.random() * 100) + 1
@@ -159,5 +217,24 @@ newGame()
 .game-card {
   max-width: 500px;
   width: 100%;
+}
+
+.number-pad-guess {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.number-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.number-btn {
+  min-width: 70px;
+  min-height: 50px;
+  font-size: 18px;
+  touch-action: manipulation;
 }
 </style>

@@ -27,19 +27,61 @@
             />
           </div>
           <div v-if="!started && !gameOver" class="game-overlay">
-            <div class="text-h5 q-mb-md">Press Space to Start</div>
-            <div class="text-body2">Use Arrow Keys or Swipe to Control</div>
+            <div class="text-h5 q-mb-md">Tap Start to Play</div>
+            <div class="text-body2">Use buttons below to control</div>
+            <q-btn
+              unelevated
+              color="primary"
+              label="Start Game"
+              size="lg"
+              class="q-mt-md"
+              @click="startGame"
+            />
           </div>
         </div>
       </div>
 
       <div class="row justify-center q-mt-md">
-        <div class="controls-hint">
-          <q-icon name="keyboard_arrow_up" size="md" />
-          <div class="row q-gutter-xs">
-            <q-icon name="keyboard_arrow_left" size="md" />
-            <q-icon name="keyboard_arrow_down" size="md" />
-            <q-icon name="keyboard_arrow_right" size="md" />
+        <div class="mobile-controls">
+          <div class="control-row">
+            <q-btn
+              unelevated
+              round
+              color="primary"
+              icon="arrow_upward"
+              size="lg"
+              class="control-btn"
+              @click="changeDirection('up')"
+            />
+          </div>
+          <div class="control-row">
+            <q-btn
+              unelevated
+              round
+              color="primary"
+              icon="arrow_back"
+              size="lg"
+              class="control-btn"
+              @click="changeDirection('left')"
+            />
+            <q-btn
+              unelevated
+              round
+              color="primary"
+              icon="arrow_downward"
+              size="lg"
+              class="control-btn"
+              @click="changeDirection('down')"
+            />
+            <q-btn
+              unelevated
+              round
+              color="primary"
+              icon="arrow_forward"
+              size="lg"
+              class="control-btn"
+              @click="changeDirection('right')"
+            />
           </div>
         </div>
       </div>
@@ -130,34 +172,49 @@ function generateFood () {
   } while (snake.some(segment => segment.x === food.x && segment.y === food.y))
 }
 
-function handleKeyPress (e) {
-  if (e.code === 'Space' && !started.value) {
+function startGame () {
+  if (!started.value) {
     started.value = true
     dx = 1
     dy = 0
+  }
+}
+
+function changeDirection (direction) {
+  if (gameOver.value) return
+  
+  if (!started.value) {
+    started.value = true
+  }
+
+  if (direction === 'up' && dy !== 1) {
+    dx = 0
+    dy = -1
+  } else if (direction === 'down' && dy !== -1) {
+    dx = 0
+    dy = 1
+  } else if (direction === 'left' && dx !== 1) {
+    dx = -1
+    dy = 0
+  } else if (direction === 'right' && dx !== -1) {
+    dx = 1
+    dy = 0
+  }
+}
+
+function handleKeyPress (e) {
+  if (e.code === 'Space' && !started.value) {
+    startGame()
     return
   }
 
   if (gameOver.value) return
 
   const key = e.key
-  if (key === 'ArrowUp' && dy !== 1) {
-    dx = 0
-    dy = -1
-    started.value = true
-  } else if (key === 'ArrowDown' && dy !== -1) {
-    dx = 0
-    dy = 1
-    started.value = true
-  } else if (key === 'ArrowLeft' && dx !== 1) {
-    dx = -1
-    dy = 0
-    started.value = true
-  } else if (key === 'ArrowRight' && dx !== -1) {
-    dx = 1
-    dy = 0
-    started.value = true
-  }
+  if (key === 'ArrowUp') changeDirection('up')
+  else if (key === 'ArrowDown') changeDirection('down')
+  else if (key === 'ArrowLeft') changeDirection('left')
+  else if (key === 'ArrowRight') changeDirection('right')
 }
 
 function endGame () {
@@ -177,6 +234,36 @@ function restart () {
   gameOver.value = false
   started.value = false
   drawGame()
+}
+
+function startGame () {
+  if (!started.value) {
+    started.value = true
+    dx = 1
+    dy = 0
+  }
+}
+
+function changeDirection (direction) {
+  if (gameOver.value) return
+  
+  if (!started.value) {
+    started.value = true
+  }
+
+  if (direction === 'up' && dy !== 1) {
+    dx = 0
+    dy = -1
+  } else if (direction === 'down' && dy !== -1) {
+    dx = 0
+    dy = 1
+  } else if (direction === 'left' && dx !== 1) {
+    dx = -1
+    dy = 0
+  } else if (direction === 'right' && dx !== -1) {
+    dx = 1
+    dy = 0
+  }
 }
 
 onMounted(() => {
@@ -223,8 +310,22 @@ onBeforeUnmount(() => {
   border-radius: 8px;
 }
 
-.controls-hint {
-  text-align: center;
-  color: #666;
+.mobile-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.control-btn {
+  min-width: 60px;
+  min-height: 60px;
+  touch-action: manipulation;
 }
 </style>

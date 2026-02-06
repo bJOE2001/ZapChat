@@ -17,7 +17,32 @@
       </div>
 
       <div class="row justify-center q-mt-md">
-        <div class="text-body2 text-grey-7">Move mouse or use arrow keys</div>
+        <div class="mobile-controls-pong">
+          <q-btn
+            unelevated
+            round
+            color="primary"
+            icon="arrow_upward"
+            size="lg"
+            class="control-btn"
+            @mousedown="moveUp"
+            @touchstart.prevent="moveUp"
+            @mouseup="stopMove"
+            @touchend="stopMove"
+          />
+          <q-btn
+            unelevated
+            round
+            color="primary"
+            icon="arrow_downward"
+            size="lg"
+            class="control-btn"
+            @mousedown="moveDown"
+            @touchstart.prevent="moveDown"
+            @mouseup="stopMove"
+            @touchend="stopMove"
+          />
+        </div>
       </div>
     </div>
   </q-page>
@@ -39,6 +64,7 @@ let ballY = 300
 let ballSpeedX = 5
 let ballSpeedY = 3
 let gameLoop = null
+let paddleMoveDir = 0
 
 function initCanvas () {
   canvas = canvasRef.value
@@ -69,6 +95,12 @@ function draw () {
 }
 
 function update () {
+  if (paddleMoveDir !== 0) {
+    paddleY += paddleMoveDir * 5
+    if (paddleY < 0) paddleY = 0
+    if (paddleY > canvas.height - 100) paddleY = canvas.height - 100
+  }
+  
   ballX += ballSpeedX
   ballY += ballSpeedY
   
@@ -112,9 +144,24 @@ function handleMouseMove (e) {
   if (paddleY > canvas.height - 100) paddleY = canvas.height - 100
 }
 
+function moveUp () {
+  paddleMoveDir = -1
+}
+
+function moveDown () {
+  paddleMoveDir = 1
+}
+
+function stopMove () {
+  paddleMoveDir = 0
+}
+
 function handleKeyPress (e) {
-  if (e.key === 'ArrowUp' && paddleY > 0) paddleY -= 10
-  if (e.key === 'ArrowDown' && paddleY < canvas.height - 100) paddleY += 10
+  if (e.key === 'ArrowUp') moveUp()
+  if (e.key === 'ArrowDown') moveDown()
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    setTimeout(() => stopMove(), 100)
+  }
 }
 
 onMounted(() => {
@@ -141,5 +188,19 @@ onBeforeUnmount(() => {
   border: 3px solid #333;
   border-radius: 8px;
   background: #000;
+  touch-action: none;
+}
+
+.mobile-controls-pong {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.control-btn {
+  min-width: 60px;
+  min-height: 60px;
+  touch-action: manipulation;
 }
 </style>
