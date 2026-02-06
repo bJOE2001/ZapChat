@@ -287,15 +287,6 @@ const selectedUserIds = ref([])
 const userOptions = ref([])
 const userSearchCache = ref({})
 
-function getNavTabFromRoute () {
-  const name = route.name
-  if (name === 'inbox' || name === 'conversation') return 'chat'
-  if (name === 'games' || name?.startsWith('game-')) return 'games'
-  if (name === 'profile') return 'profile'
-  return 'chat'
-}
-watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
-
 const canStartChat = computed(() => {
   const ids = selectedUserIds.value
   const hasOne = Array.isArray(ids) ? ids.length === 1 : ids != null && ids !== ''
