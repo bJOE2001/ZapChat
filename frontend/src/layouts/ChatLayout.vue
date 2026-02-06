@@ -4,7 +4,12 @@
       <q-toolbar>
         <q-toolbar-title class="text-weight-bold">ZapChat</q-toolbar-title>
         <q-space />
-        <span class="q-mr-md">{{ auth.user?.name }}</span>
+        <q-btn flat round dense :to="{ name: 'profile' }" class="q-mr-sm">
+          <q-avatar size="36" color="white" text-color="primary">
+            {{ (auth.user?.name || '?').charAt(0).toUpperCase() }}
+          </q-avatar>
+        </q-btn>
+        <span class="q-mr-md text-body2">{{ auth.user?.name }}</span>
         <q-btn flat round dense icon="logout" @click="handleLogout" />
       </q-toolbar>
     </q-header>

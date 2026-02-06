@@ -75,7 +75,18 @@ async function onSubmit () {
     $q.notify({ type: 'positive', message: 'Account created' })
     router.replace('/')
   } catch (e) {
-    const msg = e.response?.data?.errors ? Object.values(e.response.data.errors).flat().join(' ') : (e.response?.data?.message || 'Registration failed')
+    let msg = 'Registration failed'
+    if (!e.response) {
+      msg = 'Cannot reach server. Is the backend running? (Start it with: cd backend && php artisan serve)'
+    } else if (e.response.data?.errors) {
+      msg = Object.values(e.response.data.errors).flat().join(' ')
+    } else if (e.response.data?.message) {
+      msg = e.response.data.message
+    } else if (e.response.status >= 500) {
+      msg = `Server error (${e.response.status}). Check backend logs.`
+    } else if (e.response.status) {
+      msg = `Request failed (${e.response.status}). ${msg}`
+    }
     $q.notify({ type: 'negative', message: msg })
   } finally {
     loading.value = false

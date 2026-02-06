@@ -25,7 +25,11 @@ return [
         'https://zapchat-three.vercel.app',
     ],
 
-    'allowed_origins_patterns' => [],
+    // Allow dev server from any host (e.g. http://192.168.150.118:9000) when testing from another device
+    'allowed_origins_patterns' => [
+        '#^http://[^/]+:9000$#',
+        '#^http://[^/]+:9001$#',
+    ],
 
     'allowed_headers' => ['*'],
 
