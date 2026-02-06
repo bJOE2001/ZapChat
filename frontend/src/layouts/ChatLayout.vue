@@ -99,6 +99,22 @@
       <router-view />
     </q-page-container>
 
+    <q-footer elevated class="bg-white text-grey-8">
+      <q-tabs
+        v-model="navTab"
+        no-pane-border
+        dense
+        align="justify"
+        active-color="primary"
+        indicator-color="primary"
+        class="nav-tabs"
+      >
+        <q-tab name="chat" icon="chat" label="Chat" @click="router.push('/')" />
+        <q-tab name="games" icon="games" label="Games" @click="router.push('/games')" />
+        <q-tab name="profile" icon="person" label="Profile" @click="router.push('/profile')" />
+      </q-tabs>
+    </q-footer>
+
     <q-dialog v-model="chat.showNewChatDialog" persistent>
       <q-card style="min-width: 360px">
         <q-card-section class="row items-center q-pb-none">
@@ -172,7 +188,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useChatStore } from 'src/stores/chat'
@@ -188,11 +204,21 @@ const $q = useQuasar()
 const drawer = ref(true)
 const showDeleteConvDialog = ref(false)
 const convToDelete = ref(null)
+const navTab = ref('chat')
 const newChatType = ref('direct')
 const newGroupName = ref('')
 const selectedUserIds = ref([])
 const userOptions = ref([])
 const userSearchCache = ref({})
+
+function getNavTabFromRoute () {
+  const name = route.name
+  if (name === 'inbox' || name === 'conversation') return 'chat'
+  if (name === 'games' || name?.startsWith('game-')) return 'games'
+  if (name === 'profile') return 'profile'
+  return 'chat'
+}
+watch(() => route.name, () => { navTab.value = getNavTabFromRoute() }, { immediate: true })
 
 const canStartChat = computed(() => {
   if (newChatType.value === 'direct') return selectedUserIds.value.length === 1
