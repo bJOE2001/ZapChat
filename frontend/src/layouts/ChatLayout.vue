@@ -35,14 +35,14 @@
       show-if-above
       bordered
       :width="320"
-      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white column'"
+      :class="$q.dark?.isActive ? 'drawer-dark' : 'bg-white'"
     >
       <q-toolbar :class="$q.dark?.isActive ? 'drawer-toolbar-dark' : 'bg-primary text-white'">
         <q-btn flat round dense icon="add" @click="chat.showNewChatDialog = true" />
         <q-space />
         <q-toolbar-title>Chats</q-toolbar-title>
       </q-toolbar>
-      <q-scroll-area class="col">
+      <q-scroll-area class="fit">
         <q-list>
           <q-item
             v-for="conv in chat.conversations"
@@ -103,18 +103,6 @@
           </q-item>
         </q-list>
       </q-scroll-area>
-      <div class="q-pa-md bg-grey-2 border-top flex flex-center">
-        <q-btn
-          unelevated
-          color="primary"
-          icon="smart_toy"
-          label="Chat with Bototoy"
-          no-caps
-          class="rounded-borders bototoy-float"
-          padding="10px 16px"
-          @click="startAiChat"
-        />
-      </div>
     </q-drawer>
 
     <q-drawer
@@ -190,14 +178,6 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
-          <q-btn
-            outline
-            color="primary"
-            icon="smart_toy"
-            label="Chat with Bototoy"
-            class="q-mb-md full-width"
-            @click="startAiChat"
-          />
           <q-option-group
             v-if="!addFriendDialogMode"
             v-model="newChatType"
@@ -339,17 +319,6 @@ async function searchUsers (val, update) {
   update(() => { userOptions.value = data.users })
 }
 
-async function startAiChat () {
-  try {
-    const { data } = await api.get('/ai-user')
-    const conv = await chat.createConversation('direct', [data.id], null)
-    chat.showNewChatDialog = false
-    router.push(`/c/${conv.id}`)
-  } catch (e) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message || 'Could not start chat with Bototoy' })
-  }
-}
-
 async function startChat () {
   try {
     const participantIds = Array.isArray(selectedUserIds.value)
@@ -410,9 +379,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.bototoy-float {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
 .avatar-with-status {
   display: inline-block;
 }

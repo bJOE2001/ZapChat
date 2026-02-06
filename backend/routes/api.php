@@ -1,6 +1,5 @@
 <?php
 
-use App\Chatbot\AiChatController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageController;
@@ -36,7 +35,6 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\UpdateUserLastActivity::
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     Route::get('/users', [UserController::class, 'index']);
-    Route::get('/ai-user', [AiChatController::class, 'aiUser']);
     Route::get('/message-requests', [ConversationController::class, 'messageRequests']);
     Route::post('/conversations/{id}/accept', [ConversationController::class, 'accept'])->name('conversations.accept');
     Route::apiResource('conversations', ConversationController::class)->only(['index', 'store', 'show', 'destroy']);
