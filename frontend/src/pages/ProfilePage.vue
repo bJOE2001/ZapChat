@@ -134,15 +134,62 @@
                 <q-icon name="chevron_right" color="grey" />
               </q-item-section>
             </q-item>
-            <q-item clickable v-ripple>
-              <q-item-section avatar>
-                <q-icon name="lock" color="primary" />
-              </q-item-section>
-              <q-item-section>Privacy & security</q-item-section>
-              <q-item-section side>
-                <q-icon name="chevron_right" color="grey" />
-              </q-item-section>
-            </q-item>
+            <q-expansion-item
+              icon="lock"
+              label="Privacy & security"
+              header-class="text-primary"
+              expand-icon-class="text-grey"
+            >
+              <q-card flat bordered class="q-mx-sm q-mb-sm">
+                <q-card-section class="q-pt-none">
+                  <div class="text-caption text-grey-7 q-mb-sm">Change password</div>
+
+                  <q-input
+                    v-model="currentPassword"
+                    outlined
+                    dense
+                    class="q-mb-sm"
+                    label="Current password"
+                    :type="showPasswords ? 'text' : 'password'"
+                    autocomplete="current-password"
+                  />
+                  <q-input
+                    v-model="newPassword"
+                    outlined
+                    dense
+                    class="q-mb-sm"
+                    label="New password"
+                    :type="showPasswords ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    hint="Minimum 8 characters"
+                  />
+                  <q-input
+                    v-model="confirmPassword"
+                    outlined
+                    dense
+                    class="q-mb-md"
+                    label="Confirm new password"
+                    :type="showPasswords ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    :error="confirmPassword.length > 0 && newPassword !== confirmPassword"
+                    error-message="Passwords do not match"
+                  />
+
+                  <div class="row items-center q-gutter-sm">
+                    <q-toggle v-model="showPasswords" color="primary" label="Show" />
+                    <q-space />
+                    <q-btn
+                      unelevated
+                      color="primary"
+                      label="Update password"
+                      :loading="changingPassword"
+                      :disable="!canSubmitPassword"
+                      @click="changePassword"
+                    />
+                  </div>
+                </q-card-section>
+              </q-card>
+            </q-expansion-item>
             <q-expansion-item
               icon="palette"
               label="Appearance"
@@ -173,11 +220,12 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from 'src/stores/auth'
 import { useChatStore } from 'src/stores/chat'
+import { api } from 'src/boot/axios'
 
 const auth = useAuthStore()
 const chat = useChatStore()
@@ -239,6 +287,41 @@ function onProfileImageChange (e) {
 const bio = ref('')
 const bioDraft = ref('')
 const editingBio = ref(false)
+
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const showPasswords = ref(false)
+const changingPassword = ref(false)
+
+const canSubmitPassword = computed(() => {
+  return (
+    currentPassword.value.length > 0 &&
+    newPassword.value.length >= 8 &&
+    confirmPassword.value.length > 0 &&
+    newPassword.value === confirmPassword.value
+  )
+})
+
+async function changePassword () {
+  if (!canSubmitPassword.value || changingPassword.value) return
+  changingPassword.value = true
+  try {
+    await api.post('/change-password', {
+      current_password: currentPassword.value,
+      password: newPassword.value,
+      password_confirmation: confirmPassword.value
+    })
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    $q.notify({ type: 'positive', message: 'Password updated' })
+  } catch (e) {
+    $q.notify({ type: 'negative', message: 'Could not update password' })
+  } finally {
+    changingPassword.value = false
+  }
+}
 
 function getBioStorageKey () {
   return auth.user?.id ? `${BIO_KEY}_${auth.user.id}` : null

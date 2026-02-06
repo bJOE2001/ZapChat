@@ -32,6 +32,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\UpdateUserLastActivity::
         return $request->user();
     });
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/message-requests', [ConversationController::class, 'messageRequests']);
