@@ -1,5 +1,6 @@
 <?php
 
+use App\Chatbot\AiChatController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageController;
@@ -34,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/users', [UserController::class, 'index']);
+    Route::get('/ai-user', [AiChatController::class, 'aiUser']);
     Route::apiResource('conversations', ConversationController::class)->only(['index', 'store', 'show', 'destroy']);
     Route::get('/conversations/{conversation}/messages', [MessageController::class, 'index']);
     Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store']);

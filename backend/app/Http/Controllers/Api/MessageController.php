@@ -2,16 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Chatbot\AiChat;
+use App\Chatbot\AiChatService;
 use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class MessageController extends Controller
 {
+    public function __construct(
+        private AiChatService $aiChat
+    ) {}
+
+    private function getAiUser(): ?User
+    {
+        return User::where('email', AiChat::AI_USER_EMAIL)->first();
+    }
     public function index(Request $request, int $conversationId): JsonResponse
     {
         $conversation = Conversation::findOrFail($conversationId);
@@ -67,6 +78,25 @@ class MessageController extends Controller
 
         $message->load(['user:id,name', 'attachments']);
         event(new \App\Events\MessageSent($message));
+
+        $aiUser = $this->getAiUser();
+        $conversation->load('participants');
+        $participantIds = $conversation->participants->pluck('id')->all();
+        $isAiConversation = $aiUser && in_array($aiUser->id, $participantIds, true);
+
+        if ($isAiConversation && $message->user_id !== $aiUser->id) {
+            $body = $validated['body'] ?? '';
+            $replyText = $this->aiChat->getReply($conversation->fresh(), $body ?: '(User sent an attachment)');
+            if ($replyText !== null) {
+                $aiMessage = Message::create([
+                    'conversation_id' => $conversationId,
+                    'user_id' => $aiUser->id,
+                    'body' => $replyText,
+                ]);
+                $aiMessage->load(['user:id,name', 'attachments']);
+                event(new \App\Events\MessageSent($aiMessage));
+            }
+        }
 
         return response()->json(['message' => $message], 201);
     }
