@@ -38,7 +38,7 @@ npm install
 npm run dev          # dev server at http://localhost:9000 (or next free port)
 ```
 
-The frontend is configured to call the API at `http://localhost:8000/api` in development (see `frontend/quasar.config.js` → `build.env.API_URL`).
+The frontend calls the API using the **same host** as the page in development (e.g. `http://localhost:8000/api` when you open `http://localhost:9000`, or `http://192.168.150.118:8000/api` when you open `http://192.168.150.118:9000`). If you access the app from another device on your network, start the backend so it listens on all interfaces: `php artisan serve --host=0.0.0.0`.
 
 ### 3. Chat app (optional)
 

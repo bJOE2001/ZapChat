@@ -98,7 +98,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useChatStore } from 'src/stores/chat'
-import { api } from 'src/boot/axios'
+import { api, getApiBaseURL } from 'src/boot/axios'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -118,7 +118,7 @@ const displayName = computed(() => {
 })
 
 function attachmentUrl (att) {
-  const apiUrl = import.meta.env.VITE_API_URL || process.env.API_URL || 'http://localhost:8000/api'
+  const apiUrl = getApiBaseURL()
   const base = apiUrl.replace(/\/api\/?$/, '')
   return `${base}/storage/${att.path}`
 }
