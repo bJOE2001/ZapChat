@@ -36,7 +36,16 @@
               }"
               @click="selectCell(rowIdx, colIdx)"
             >
-              <span class="cell-value">{{ cell.value || '' }}</span>
+              <input
+                v-if="!cell.prefilled"
+                v-model.number="cell.value"
+                type="number"
+                min="1"
+                max="9"
+                class="cell-input"
+                @input="onCellInput(rowIdx, colIdx, $event)"
+              />
+              <span v-else class="cell-value">{{ cell.value || '' }}</span>
             </div>
           </div>
         </div>
@@ -52,13 +61,6 @@
             :label="num"
             class="number-btn"
             @click="setCellValue(num)"
-          />
-          <q-btn
-            unelevated
-            color="grey"
-            label="Clear"
-            class="number-btn clear-btn"
-            @click="clearCell"
           />
         </div>
       </div>
@@ -115,12 +117,13 @@ function setCellValue (value) {
   }
 }
 
-function clearCell () {
-  if (selectedCell.value) {
-    const { row, col } = selectedCell.value
-    if (!grid.value[row][col].prefilled) {
-      grid.value[row][col].value = null
-    }
+function onCellInput (row, col, event) {
+  const value = parseInt(event.target.value)
+  if (value >= 1 && value <= 9) {
+    grid.value[row][col].value = value
+    checkWin()
+  } else if (event.target.value === '') {
+    grid.value[row][col].value = null
   }
 }
 
@@ -199,14 +202,18 @@ newGame()
   background: #ffcdd2;
 }
 
-.cell-value {
-  font-weight: bold;
+.cell-input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  text-align: center;
   font-size: 18px;
+  font-weight: 500;
+  background: transparent;
 }
 
-.clear-btn {
-  width: 100%;
-  margin-top: 8px;
+.cell-value {
+  font-weight: bold;
 }
 
 .number-pad {

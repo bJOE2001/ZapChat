@@ -18,32 +18,7 @@
       </div>
 
       <div class="row justify-center q-mt-md">
-        <div class="mobile-controls-breakout">
-          <q-btn
-            unelevated
-            round
-            color="primary"
-            icon="arrow_back"
-            size="lg"
-            class="control-btn"
-            @mousedown="movePaddleLeft"
-            @touchstart.prevent="movePaddleLeft"
-            @mouseup="stopMove"
-            @touchend="stopMove"
-          />
-          <q-btn
-            unelevated
-            round
-            color="primary"
-            icon="arrow_forward"
-            size="lg"
-            class="control-btn"
-            @mousedown="movePaddleRight"
-            @touchstart.prevent="movePaddleRight"
-            @mouseup="stopMove"
-            @touchend="stopMove"
-          />
-        </div>
+        <div class="text-body2 text-grey-7">Move mouse or use arrow keys</div>
       </div>
     </div>
   </q-page>
@@ -65,7 +40,6 @@ let ballSpeedX = 4
 let ballSpeedY = -4
 let bricks = []
 let gameLoop = null
-let paddleMoveDir = 0
 
 function initBricks () {
   bricks = []
@@ -97,12 +71,6 @@ function draw () {
 }
 
 function update () {
-  if (paddleMoveDir !== 0) {
-    paddleX += paddleMoveDir * 10
-    if (paddleX < 0) paddleX = 0
-    if (paddleX > canvas.width - 100) paddleX = canvas.width - 100
-  }
-  
   ballX += ballSpeedX
   ballY += ballSpeedY
   
@@ -150,24 +118,9 @@ function handleMouseMove (e) {
   if (paddleX > canvas.width - 100) paddleX = canvas.width - 100
 }
 
-function movePaddleLeft () {
-  paddleMoveDir = -1
-}
-
-function movePaddleRight () {
-  paddleMoveDir = 1
-}
-
-function stopMove () {
-  paddleMoveDir = 0
-}
-
 function handleKeyPress (e) {
-  if (e.key === 'ArrowLeft') movePaddleLeft()
-  if (e.key === 'ArrowRight') movePaddleRight()
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-    setTimeout(() => stopMove(), 100)
-  }
+  if (e.key === 'ArrowLeft' && paddleX > 0) paddleX -= 20
+  if (e.key === 'ArrowRight' && paddleX < canvas.width - 100) paddleX += 20
 }
 
 function restart () {
@@ -209,18 +162,5 @@ onBeforeUnmount(() => {
   border: 3px solid #333;
   border-radius: 8px;
   background: #000;
-  touch-action: none;
-}
-
-.mobile-controls-breakout {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-}
-
-.control-btn {
-  min-width: 60px;
-  min-height: 60px;
-  touch-action: manipulation;
 }
 </style>

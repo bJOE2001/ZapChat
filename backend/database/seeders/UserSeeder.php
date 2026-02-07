@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Chatbot\AiChat;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,11 @@ class UserSeeder extends Seeder
                 'name' => 'Bob',
                 'email' => 'bob@example.com',
                 'password' => Hash::make('password'),
+            ],
+            [
+                'name' => 'Bototoy',
+                'email' => AiChat::AI_USER_EMAIL,
+                'password' => Hash::make('ai-bot-no-login-'.config('app.key')),
             ],
         ];
 

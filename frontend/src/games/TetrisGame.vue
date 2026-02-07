@@ -30,48 +30,7 @@
       </div>
 
       <div class="row justify-center q-mt-md">
-        <div class="mobile-controls-tetris">
-          <div class="control-row">
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_upward"
-              size="lg"
-              class="control-btn"
-              @click="rotatePiece"
-            />
-          </div>
-          <div class="control-row">
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_back"
-              size="lg"
-              class="control-btn"
-              @click="moveLeft"
-            />
-            <q-btn
-              unelevated
-              round
-              color="secondary"
-              icon="arrow_downward"
-              size="lg"
-              class="control-btn"
-              @click="dropPiece"
-            />
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_forward"
-              size="lg"
-              class="control-btn"
-              @click="moveRight"
-            />
-          </div>
-        </div>
+        <div class="text-body2 text-grey-7">Arrow Keys: Move/Rotate | Space: Drop</div>
       </div>
     </div>
   </q-page>
@@ -221,60 +180,32 @@ function update (time = 0) {
   drawBoard()
 }
 
-function moveLeft () {
-  if (gameOver.value || paused.value) return
-  if (!collide(currentPiece, -1, 0)) {
-    currentPiece.x--
-    drawBoard()
-  }
-}
-
-function moveRight () {
-  if (gameOver.value || paused.value) return
-  if (!collide(currentPiece, 1, 0)) {
-    currentPiece.x++
-    drawBoard()
-  }
-}
-
-function rotatePiece () {
-  if (gameOver.value || paused.value) return
-  const rotated = currentPiece.matrix[0].map((_, i) => 
-    currentPiece.matrix.map(row => row[i]).reverse()
-  )
-  const original = currentPiece.matrix
-  currentPiece.matrix = rotated
-  if (collide(currentPiece, 0, 0)) {
-    currentPiece.matrix = original
-  }
-  drawBoard()
-}
-
-function dropPiece () {
-  if (gameOver.value || paused.value) return
-  while (!collide(currentPiece, 0, 1)) {
-    currentPiece.y++
-    score.value += 2
-  }
-  drawBoard()
-}
-
 function handleKeyPress (e) {
   if (gameOver.value) return
   
-  if (e.key === 'ArrowLeft') {
-    moveLeft()
-  } else if (e.key === 'ArrowRight') {
-    moveRight()
+  if (e.key === 'ArrowLeft' && !collide(currentPiece, -1, 0)) {
+    currentPiece.x--
+  } else if (e.key === 'ArrowRight' && !collide(currentPiece, 1, 0)) {
+    currentPiece.x++
   } else if (e.key === 'ArrowDown' && !collide(currentPiece, 0, 1)) {
     currentPiece.y++
     score.value++
-    drawBoard()
   } else if (e.key === 'ArrowUp') {
-    rotatePiece()
+    const rotated = currentPiece.matrix[0].map((_, i) => 
+      currentPiece.matrix.map(row => row[i]).reverse()
+    )
+    const original = currentPiece.matrix
+    currentPiece.matrix = rotated
+    if (collide(currentPiece, 0, 0)) {
+      currentPiece.matrix = original
+    }
   } else if (e.key === ' ') {
-    dropPiece()
+    while (!collide(currentPiece, 0, 1)) {
+      currentPiece.y++
+      score.value += 2
+    }
   }
+  drawBoard()
 }
 
 function togglePause () {
@@ -340,24 +271,5 @@ onBeforeUnmount(() => {
   justify-content: center;
   color: white;
   border-radius: 8px;
-}
-
-.mobile-controls-tetris {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.control-row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.control-btn {
-  min-width: 60px;
-  min-height: 60px;
-  touch-action: manipulation;
 }
 </style>

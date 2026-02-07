@@ -33,47 +33,8 @@
       </div>
 
       <div class="row justify-center q-mt-md">
-        <div class="mobile-controls-2048">
-          <div class="control-row">
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_upward"
-              size="lg"
-              class="control-btn"
-              @click="moveUp"
-            />
-          </div>
-          <div class="control-row">
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_back"
-              size="lg"
-              class="control-btn"
-              @click="moveLeft"
-            />
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_downward"
-              size="lg"
-              class="control-btn"
-              @click="moveDown"
-            />
-            <q-btn
-              unelevated
-              round
-              color="primary"
-              icon="arrow_forward"
-              size="lg"
-              class="control-btn"
-              @click="moveRight"
-            />
-          </div>
+        <div class="text-center text-body2 text-grey-7">
+          Use Arrow Keys to Play
         </div>
       </div>
 
@@ -281,23 +242,4 @@ onBeforeUnmount(() => {
 .cell-512 { background: #edc850; color: white; font-size: 20px; }
 .cell-1024 { background: #edc53f; color: white; font-size: 18px; }
 .cell-2048 { background: #edc22e; color: white; font-size: 18px; }
-
-.mobile-controls-2048 {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.control-row {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.control-btn {
-  min-width: 60px;
-  min-height: 60px;
-  touch-action: manipulation;
-}
 </style>

@@ -261,6 +261,11 @@ const showDeleteConvDialog = ref(false)
 const convToDelete = ref(null)
 const navTab = ref('chat')
 const addFriendDialogMode = ref(false)
+const newChatType = ref('direct')
+const newGroupName = ref('')
+const selectedUserIds = ref([])
+const userOptions = ref([])
+const userSearchCache = ref({})
 
 function getNavTabFromRoute () {
   const name = route.name

@@ -52,7 +52,20 @@ After both servers are running:
 
 3. Use **New chat** (➕) to start a 1-on-1 or group conversation. Messages and file attachments are supported; the conversation view polls for new messages every few seconds.
 
-### 4. CORS
+### 4. AI Chatbot (optional, free)
+
+The app includes an **AI chatbot** powered by **Google Gemini** (free tier). To enable it:
+
+1. **Seed the AI user** (included in `php artisan db:seed`): creates **ZapChat AI** (`ai@zapchat.local`).
+2. **Add your Gemini API key** in `backend/.env`:
+   ```env
+   GEMINI_API_KEY=your-key-here
+   GEMINI_MODEL=gemini-2.0-flash
+   ```
+   Get a **free** key at [Google AI Studio](https://aistudio.google.com/apikey) (no credit card required).
+3. In the app, click **New chat** (➕) and then **Chat with AI**. Send a message; the bot replies using the conversation history. If the key is missing, the bot will say that AI is not configured.
+
+### 5. CORS
 
 The Laravel backend allows the Quasar dev origin in `backend/config/cors.php` (e.g. `http://localhost:9000`). Adjust `allowed_origins` there if you use another port or domain.
 
