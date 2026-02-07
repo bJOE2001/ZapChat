@@ -286,12 +286,6 @@ function openAddFriend () {
   chat.showNewChatDialog = true
 }
 
-const newChatType = ref('direct')
-const newGroupName = ref('')
-const selectedUserIds = ref([])
-const userOptions = ref([])
-const userSearchCache = ref({})
-
 const canStartChat = computed(() => {
   const ids = selectedUserIds.value
   const hasOne = Array.isArray(ids) ? ids.length === 1 : ids != null && ids !== ''
