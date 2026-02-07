@@ -18,8 +18,7 @@
           <q-btn
             v-for="(color, index) in colors"
             :key="index"
-            :class="`simon-button ${color}`"
-            :class="{ 'active': activeButton === index, 'disabled': !canClick }"
+            :class="[`simon-button ${color}`, { active: activeButton === index, disabled: !canClick }]"
             :disable="!canClick"
             size="xl"
             @click="clickButton(index)"
